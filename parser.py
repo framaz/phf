@@ -1,69 +1,59 @@
 import re
+import time
+
 import requests
 import json
 import asyncio
 import aioconsole
+import threading
 
-class Dvach:
-    def __init__(self, link):
-        res = re.search(r"2ch\.(hk|pm|re|tf|wf|yt)\/[a-zA-Z0-9]+\/res\/[0-9]+", link)
-        self.link = "https://" + res[0] + ".json"
-        self.site = "Dvach"
-        formatted_json = self._get_json_data()
-        self.board = r"/" + formatted_json["Board"] + r"/"
-        self.thread_num = formatted_json["current_thread"]
-        self.last_posts = set()
+from Sites.dvach import Dvach
 
-    def _get_content(self):
-        r = requests.get(self.link)
-        return r.text
+class _Getch:
+    """Gets a single character from standard input.  Does not echo to the
+screen."""
+    def __init__(self):
+        self.impl = _GetchUnix()
 
-    def _get_json_data(self):
-        unformatted_json = self._get_content()
-        formatted_json = json.loads(unformatted_json)
-        return formatted_json
+    def __call__(self): return self.impl()
 
-    @staticmethod
-    def _decode_post(post_string):
-        res = re.sub(r'<a [a-zA-Z0-9="\/.# ->]*(>>[0-9]+( \(OP\))?)<\/a>', r'\1', post_string)
-        res = re.sub(r"<br>", "\n", res)
-        return res
 
-    @staticmethod
-    def _full_post_to_short_form(post_json):
-        short_post = dict()
-        short_post["date"] = post_json["date"]
-        short_post["num"] = post_json["num"]
-        short_post["comment"] = Dvach._decode_post(post_json["comment"])
-        return short_post
+class _GetchUnix:
+    def __init__(self):
+        import tty, sys
 
-    def _get_posts(self):
-        formatted_json = self._get_json_data()
-        posts = formatted_json["threads"][0]['posts']
-        res = []
-        for post in posts:
-            res.append(Dvach._full_post_to_short_form(post))
-        return res
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
 
-    def get_updated_text(self):
-        posts = self._get_posts()
-        res = []
-        for post in posts:
-            if post['num'] not in self.last_posts:
-                self.last_posts.add(post['num'])
-                res.append(post)
-        return res
+
+
+getch = _Getch()
 
 async def get_action() -> str:
-    kek = await aioconsole.ainput()
+    kek = await command_queue.get()
     return kek
 
 async def updates_generator(period, target):
     while True:
+        await command_lock.acquire()
         print(target.get_updated_text())
+        command_lock.release()
         await asyncio.sleep(period)
 
 async def start_all():
+    global event_loop, command_queue, command_lock
+    command_queue = asyncio.Queue()
+    command_lock = asyncio.Lock()
+    event_loop = asyncio.get_running_loop()
+
     tasks = list()
     while True:
         string = await get_action()
@@ -73,5 +63,21 @@ async def start_all():
             break
         tasks.append(asyncio.create_task(updates_generator(5, Dvach(string))))
     await asyncio.sleep(10)
-    print("exit")
+event_loop = None
+command_queue = asyncio.Queue()
+command_lock = asyncio.Lock()
+def thread_input_output():
+    while True:
+        if event_loop is None:
+            time.sleep(2)
+            continue
+        getch()
+        asyncio.run_coroutine_threadsafe(command_lock.acquire(), event_loop)
+        addr = input("Enter site name:\n")
+        asyncio.run_coroutine_threadsafe(command_queue.put(addr), event_loop)
+        command_lock.release()
+     #   asyncio.run_coroutine_threadsafe(command_queue.put(addr), event_loop)
+
+
+threading.Thread(target=thread_input_output).start()
 asyncio.run(start_all())
