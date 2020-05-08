@@ -3,9 +3,11 @@ import re
 
 import requests
 
+from abstractsite import AbstractSiteContentDownloader
 
-class Dvach:
-    def __init__(self, link):
+
+class Dvach(AbstractSiteContentDownloader):
+    def initialize(self, link):
         res = re.search(r"2ch\.(hk|pm|re|tf|wf|yt)\/[a-zA-Z0-9]+\/res\/[0-9]+", link)
         self.link = "https://" + res[0] + ".json"
         self.site = "Dvach"
@@ -45,11 +47,6 @@ class Dvach:
             res.append(Dvach._full_post_to_short_form(post))
         return res
 
-    def get_updated_text(self):
-        posts = self._get_posts()
-        res = []
-        for post in posts:
-            if post['num'] not in self.last_posts:
-                self.last_posts.add(post['num'])
-                res.append(post)
-        return res
+    def get_site(self):
+        return self._get_posts()
+

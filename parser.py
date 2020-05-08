@@ -1,20 +1,13 @@
 import asyncio
-
 from Inputs.consoleinput import ConsoleInput
 from Sites.dvach import Dvach
+from hooks.dvachhooks import DvachShowHook
 
 
 async def get_action(command_queue) -> str:
     kek = await command_queue.get()
     return kek
 
-async def updates_generator(period, target, command_lock):
-    while True:
-        await command_lock.acquire()
-        print(target.get_updated_text())
-        print("Press any button to add new stuff")
-        command_lock.release()
-        await asyncio.sleep(period)
 
 async def start_all():
     command_queue = asyncio.Queue()
@@ -29,7 +22,10 @@ async def start_all():
             for task in tasks:
                 task.cancel()
             break
-        tasks.append(asyncio.create_task(updates_generator(5, Dvach(string), command_lock)))
+        hook = DvachShowHook()
+        dvach = Dvach(string)
+        dvach.add_hook(hook)
+        tasks.append(asyncio.create_task(dvach.cycle()))
     await asyncio.sleep(10)
 
 
