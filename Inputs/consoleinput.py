@@ -2,6 +2,8 @@ import asyncio
 import threading
 import time
 
+from aioconsole import ainput
+
 
 class _Getch:
     """Gets a single character from standard input.  Does not echo to the
@@ -48,5 +50,22 @@ class ConsoleInput:
                 addr = input("Enter site name:\n")
                 asyncio.run_coroutine_threadsafe(self.queue.put(addr), self.loop)
                 self.lock.release()
+
+        threading.Thread(target=thread_input_output).start()
+class ConsoleDebugInput:
+    def __init__(self, queue, lock, loop):
+        self.queue = queue
+        self.lock = lock
+        self.loop = loop
+
+        def thread_input_output():
+            async def func():
+                while True:
+                    if self.loop is None:
+                        time.sleep(2)
+                        continue
+                    addr = await ainput("Enter site name:\n")
+                    asyncio.run_coroutine_threadsafe(self.queue.put(addr), self.loop)
+            asyncio.run(func())
 
         threading.Thread(target=thread_input_output).start()

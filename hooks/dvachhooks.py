@@ -2,9 +2,9 @@ from abstracthook import AbstractHook
 
 
 class DvachShowHook(AbstractHook):
-    def initialize(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.last_posts = set()
-        pass
 
     def get_updated_text(self, posts):
         res = []

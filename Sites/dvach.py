@@ -7,7 +7,8 @@ from abstractsite import AbstractSiteContentDownloader
 
 
 class Dvach(AbstractSiteContentDownloader):
-    def initialize(self, link):
+    def __init__(self, link, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         res = re.search(r"2ch\.(hk|pm|re|tf|wf|yt)\/[a-zA-Z0-9]+\/res\/[0-9]+", link)
         self.link = "https://" + res[0] + ".json"
         self.site = "Dvach"
