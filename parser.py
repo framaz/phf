@@ -1,7 +1,7 @@
 import asyncio
 from Inputs.consoleinput import ConsoleInput, ConsoleDebugInput
 from Sites.dvach import Dvach
-from hooks.dvachhooks import DvachShowHook
+from hooks.dvachhooks import DvachShowHook, DvachFileDownloader
 
 
 async def get_action(command_queue) -> str:
@@ -24,7 +24,7 @@ async def start_all():
             for task in tasks:
                 task.cancel()
             break
-        hook = DvachShowHook(command_lock)
+        hook = DvachFileDownloader(command_lock)
         dvach = Dvach(string)
         dvach.add_hook(hook)
         tasks.append(asyncio.create_task(dvach.cycle()))

@@ -38,6 +38,7 @@ class Dvach(AbstractSiteContentDownloader):
         short_post["date"] = post_json["date"]
         short_post["num"] = post_json["num"]
         short_post["comment"] = Dvach._decode_post(post_json["comment"])
+        short_post["files"] = post_json["files"]
         return short_post
 
     def _get_posts(self):
@@ -50,4 +51,3 @@ class Dvach(AbstractSiteContentDownloader):
 
     def get_site(self):
         return self._get_posts()
-

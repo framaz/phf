@@ -52,6 +52,8 @@ class ConsoleInput:
                 self.lock.release()
 
         threading.Thread(target=thread_input_output).start()
+
+
 class ConsoleDebugInput:
     def __init__(self, queue, lock, loop):
         self.queue = queue
@@ -66,6 +68,7 @@ class ConsoleDebugInput:
                         continue
                     addr = await ainput("Enter site name:\n")
                     asyncio.run_coroutine_threadsafe(self.queue.put(addr), self.loop)
+
             asyncio.run(func())
 
         threading.Thread(target=thread_input_output).start()
