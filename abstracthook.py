@@ -4,9 +4,6 @@ import asyncio
 class AbstractHook:
     def __new__(cls, IOLock=None, *args, **kwargs):
         obj = object.__new__(cls)
-        obj.__IOLock = None
-        if IOLock is not None:
-            obj.__IOLock = IOLock
         obj._asyncio_queue = None
         return obj
 
