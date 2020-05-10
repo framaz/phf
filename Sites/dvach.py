@@ -3,10 +3,10 @@ import re
 
 import requests
 
-from abstractsite import AbstractSiteContentDownloader
+from provider import AbstractContentProvider
 
 
-class Dvach(AbstractSiteContentDownloader):
+class Dvach(AbstractContentProvider):
     def __init__(self, link, *args, **kwargs):
         super().__init__(*args, **kwargs)
         res = re.search(r"2ch\.(hk|pm|re|tf|wf|yt)\/[a-zA-Z0-9]+\/res\/[0-9]+", link)
