@@ -6,12 +6,48 @@ from abstracthook import AbstractHook
 from provider import AbstractContentProvider
 
 
+class HookAndProviderFactory:
+    def __init__(self, provider_paths=None, hook_paths=None):
+        if provider_paths is None:
+            provider_paths = []
+        if hook_paths is None:
+            hook_paths = []
+
+        self._hookAnalyser = _HookAnalyser()
+        self._hookAnalyser.analyse(*hook_paths)
+
+        self._providerAnalyser = _ProviderAnalyser()
+        self._providerAnalyser.analyse(*provider_paths)
+
+    def import_hook_classes(self, hook):
+        if not isinstance(hook, (list, tuple)):
+            hook = [hook]
+        self._hookAnalyser.analyse(*hook)
+
+    def import_provider_classes(self, provider):
+        if not isinstance(provider, (list, tuple)):
+            hook = [provider]
+        self._providerAnalyser.analyse(*provider)
+
+    def create_hook(self, hook, *args, **kwargs):
+        all_hooks = self._hookAnalyser.get_hooks()
+        if hook not in all_hooks:
+            raise Exception(f'No hook named "{hook}"')
+        return all_hooks[hook](*args, **kwargs)
+
+    def create_provider(self, provider, *args, **kwargs):
+        all_providers = self._providerAnalyser.get_providers()
+        if provider not in all_providers:
+            raise Exception(f'No hook named "{provider}"')
+        return all_providers[provider](*args, **kwargs)
+
+
 class _BasicAnalyser:
     def __init__(self):
         self._classes = {}
 
     def analyse_module(self, file_path):
-        if file_path[~2:] != ".py" and not(os.path.isfile(os.path.join(file_path, "__init__.py"))):
+        if file_path[~2:] != ".py" and not (os.path.isfile(os.path.join(file_path, "__init__.py"))):
             return
         file_path = file_path.replace("/", ".")
         if file_path[~2:] == ".py":
@@ -49,6 +85,9 @@ class _HookAnalyser(_BasicAnalyser):
     def hooks(self):
         return copy.deepcopy(self._classes)
 
+    def get_hooks(self):
+        return self.hooks
+
 
 class _ProviderAnalyser(_BasicAnalyser):
     def right_class_type(self, obj):
@@ -58,6 +97,8 @@ class _ProviderAnalyser(_BasicAnalyser):
     def providers(self):
         return copy.deepcopy(self._classes)
 
+    def get_providers(self):
+        return self.providers
 
 class NameDoublingError(Exception):
     _obj_type_name = ""
@@ -82,6 +123,6 @@ class ProviderNameDoublingError(NameDoublingError):
 
 
 if __name__ == "__main__":
-    kek = _ProviderAnalyser()
-    kek.analyse("Sites")
+    kek = HookAndProviderFactory(provider_paths=["Sites"], hook_paths="hooks")
+    provider = kek.create_provider("Dvach", "https://2ch.hk/b/res/219946385.html")
     kek = kek
