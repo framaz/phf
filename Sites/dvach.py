@@ -7,9 +7,11 @@ from provider import AbstractContentProvider
 
 
 class Dvach(AbstractContentProvider):
+    _alias = ["dv"]
+
     def __init__(self, link, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        res = re.search(r"2ch\.(hk|pm|re|tf|wf|yt)\/[a-zA-Z0-9]+\/res\/[0-9]+", link)
+        res = re.search(r"2ch\.(hk|pm|re|tf|wf|yt)/[a-zA-Z0-9]+/res/[0-9]+", link)
         self.link = "https://" + res[0] + ".json"
         self.site = "Dvach"
         formatted_json = self._get_json_data()
@@ -28,7 +30,7 @@ class Dvach(AbstractContentProvider):
 
     @staticmethod
     def _decode_post(post_string):
-        res = re.sub(r'<a [a-zA-Z0-9="\/.# ->]*(>>[0-9]+( \(OP\))?)<\/a>', r'\1', post_string)
+        res = re.sub(r'<a [a-zA-Z0-9="/.# ->]*(>>[0-9]+( \(OP\))?)</a>', r'\1', post_string)
         res = re.sub(r"<br>", "\n", res)
         return res
 

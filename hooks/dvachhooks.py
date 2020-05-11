@@ -1,10 +1,9 @@
-import time
-
 from abstracthook import AbstractHook
 from utils import download_files
 
 
 class DvachShowHook(AbstractHook):
+    _alias = ["dvS"]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.last_posts = set()
@@ -27,6 +26,7 @@ class DvachShowHook(AbstractHook):
 
 
 class DvachFileDownloader(DvachShowHook):
+    _alias = ["dvD"]
     async def hook_action(self, output):
         posts = self.get_updated_text(output)
         download_list = []

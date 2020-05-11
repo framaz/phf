@@ -2,6 +2,7 @@ import copy
 import importlib
 import inspect
 import os
+
 from abstracthook import AbstractHook
 from provider import AbstractContentProvider
 
@@ -52,10 +53,15 @@ class _BasicAnalyser:
         module = importlib.import_module(file_path)
         for name, obj in inspect.getmembers(module):
             if inspect.isclass(obj) and self.right_class_type(obj):
-                if name in self._classes and obj is not self._classes[name]:
-                    raise HookNameDoublingError(name, self._classes[name], obj)
-                else:
-                    self._classes[name] = obj
+                self.add_class_as_name(name, obj)
+                for alias in obj.get_aliases():
+                    self.add_class_as_name(alias, obj)
+
+    def add_class_as_name(self, name, obj):
+        if name in self._classes and obj is not self._classes[name]:
+            raise HookNameDoublingError(name, self._classes[name], obj)
+        else:
+            self._classes[name] = obj
 
     def right_class_type(self, obj):
         raise NotImplementedError(f"Abstract right_class_type call of {self.__class__}")
@@ -119,6 +125,6 @@ class ProviderNameDoublingError(NameDoublingError):
 
 
 if __name__ == "__main__":
-    kek = HookAndProviderFactory(provider_paths=["Sites"], hook_paths="hooks")
+    kek = HookAndProviderFactory(provider_paths=["Sites"], hook_paths=["hooks"])
     provider = kek.create_providers("Dvach", "https://2ch.hk/b/res/219946385.html")
     kek = kek

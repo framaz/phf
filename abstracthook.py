@@ -1,7 +1,10 @@
 import asyncio
+import copy
 
 
 class AbstractHook:
+    _alias = []
+
     def __new__(cls, IOLock=None, *args, **kwargs):
         obj = object.__new__(cls)
         obj._asyncio_queue = None
@@ -24,3 +27,7 @@ class AbstractHook:
 
     async def hook_action(self, output):
         raise NotImplementedError(f"hook_action of {self.__class__} not overridden")
+
+    @classmethod
+    def get_aliases(cls):
+        return copy.deepcopy(cls._alias)

@@ -1,7 +1,10 @@
 import asyncio
+import copy
 
 
 class AbstractContentProvider:
+    _alias = []
+
     def __new__(cls, *args, **kwargs):
         obj = object.__new__(cls)
         obj.__hooks = []
@@ -49,3 +52,7 @@ class AbstractContentProvider:
             for hook in self.__hooks:
                 hook.cancel()
             return True
+
+    @classmethod
+    def get_aliases(cls):
+        return copy.deepcopy(cls._alias)
