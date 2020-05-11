@@ -11,11 +11,11 @@ class _BasicAnalyser:
         self._classes = {}
 
     def analyse_module(self, file_path):
-        file_path = file_path.replace("/", ".")
-
-        if file_path[~2:] != ".py":
+        if file_path[~2:] != ".py" and not(os.path.isfile(os.path.join(file_path, "__init__.py"))):
             return
-        file_path = file_path[:~2]
+        file_path = file_path.replace("/", ".")
+        if file_path[~2:] == ".py":
+            file_path = file_path[:~2]
 
         module = importlib.import_module(file_path)
         for name, obj in inspect.getmembers(module):
@@ -31,10 +31,12 @@ class _BasicAnalyser:
     def analyse(self, *args):
         for file in args:
             if os.path.isdir(file):
-                strings = os.listdir(file)
-                strings = [os.path.join(file, string) for string in strings]
-                self.analyse(*strings)
-                pass
+                if os.path.isfile(os.path.join(file, "__init__.py")):
+                    self.analyse_module(file)
+                else:
+                    strings = os.listdir(file)
+                    strings = [os.path.join(file, string) for string in strings]
+                    self.analyse(*strings)
             else:
                 self.analyse_module(file)
 
