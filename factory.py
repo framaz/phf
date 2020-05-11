@@ -19,23 +19,19 @@ class HookAndProviderFactory:
         self._providerAnalyser = _ProviderAnalyser()
         self._providerAnalyser.analyse(*provider_paths)
 
-    def import_hook_classes(self, hook):
-        if not isinstance(hook, (list, tuple)):
-            hook = [hook]
-        self._hookAnalyser.analyse(*hook)
+    def import_hook_classes(self, *args):
+        self._hookAnalyser.analyse(*args)
 
-    def import_provider_classes(self, provider):
-        if not isinstance(provider, (list, tuple)):
-            hook = [provider]
-        self._providerAnalyser.analyse(*provider)
+    def import_provider_classes(self, *args):
+        self._providerAnalyser.analyse(*args)
 
-    def create_hook(self, hook, *args, **kwargs):
+    def create_hooks(self, hook, *args, **kwargs):
         all_hooks = self._hookAnalyser.get_hooks()
         if hook not in all_hooks:
             raise Exception(f'No hook named "{hook}"')
         return all_hooks[hook](*args, **kwargs)
 
-    def create_provider(self, provider, *args, **kwargs):
+    def create_providers(self, provider, *args, **kwargs):
         all_providers = self._providerAnalyser.get_providers()
         if provider not in all_providers:
             raise Exception(f'No hook named "{provider}"')
@@ -124,5 +120,5 @@ class ProviderNameDoublingError(NameDoublingError):
 
 if __name__ == "__main__":
     kek = HookAndProviderFactory(provider_paths=["Sites"], hook_paths="hooks")
-    provider = kek.create_provider("Dvach", "https://2ch.hk/b/res/219946385.html")
+    provider = kek.create_providers("Dvach", "https://2ch.hk/b/res/219946385.html")
     kek = kek

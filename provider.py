@@ -23,6 +23,7 @@ class AbstractContentProvider:
         raise NotImplementedError(f"Get_site of {self.__class__} not overridden")
 
     async def cycle(self, period=5):
+        self._asyncio_running = True
         async with self:
             while True:
                 await asyncio.sleep(period)
