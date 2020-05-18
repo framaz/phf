@@ -31,25 +31,24 @@ class AsyncParser:
     def _run_content_provider(self, content_provider):
         content_provider._asyncio_task = asyncio.create_task(content_provider.cycle())
 
-    async def _get_action(self, command_queue) -> str:
-        kek = await command_queue.get()
-        return kek
+    async def _get_action(self, command_queue):
+        kek, target = await command_queue.get()
+        return kek, target
 
     async def _start_main_coroutine(self):
         self._running_state = True
 
         command_queue = asyncio.Queue()
-        command_lock = asyncio.Lock()
-        event_loop = asyncio.get_running_loop()
+        result_queue = asyncio.Queue()
 
         for input_source in self._input_sources:
-            input_source.start(command_queue)
+            input_source.start(command_queue, result_queue)
 
         for provider in self._providers:
             self._run_content_provider(provider)
 
         while True:
-            string = await self._get_action(command_queue)
+            string, evoker = await self._get_action(command_queue)
             strings = string.split(" ")
             if string.find("exit") != -1:
                 break
@@ -64,6 +63,7 @@ class AsyncParser:
                 strings = strings[2:]
                 hook = self._providers_and_hooks_factory.create_hooks(*strings)
                 self._providers[target].add_hook(hook)
+            await evoker.set_command_result("SUCCESS")
 
     def start(self):
         asyncio.run(self._start_main_coroutine())

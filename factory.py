@@ -47,6 +47,7 @@ class _BasicAnalyser:
         if file_path[~2:] != ".py" and not (os.path.isfile(os.path.join(file_path, "__init__.py"))):
             return
         file_path = file_path.replace("/", ".")
+        file_path = file_path.replace("\\", ".")
         if file_path[~2:] == ".py":
             file_path = file_path[:~2]
 

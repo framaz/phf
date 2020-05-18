@@ -5,10 +5,10 @@ from hooks.dvachhooks import DvachShowHook, DvachFileDownloader
 from asyncparser import AsyncParser
 from Inputs.consoleinput import ConsoleDebugInput
 
+if __name__ == "__main__":
+    parser = AsyncParser()
+    parser.import_hook_sources("hooks")
+    parser.import_provider_sources("Sites")
 
-parser = AsyncParser()
-parser.import_hook_sources("hooks")
-parser.import_provider_sources("Sites")
-
-parser.add_input_source(ConsoleDebugInput())
-parser.start()
+    parser.add_input_source(ConsoleDebugInput())
+    parser.start()
