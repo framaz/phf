@@ -31,3 +31,8 @@ class AbstractHook:
     @classmethod
     def get_aliases(cls):
         return copy.deepcopy(cls._alias)
+
+
+class BasicPrintHook(AbstractHook):
+    async def hook_action(self, output):
+        print(output)

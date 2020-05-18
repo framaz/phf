@@ -1,5 +1,7 @@
 import asyncio
 import copy
+import threading
+import time
 
 
 class AbstractContentProvider:
@@ -42,10 +44,13 @@ class AbstractContentProvider:
             self._start_hook(hook)
 
     async def __aenter__(self):
+        self._asyncio_loop = asyncio.get_event_loop()
+        self._asyncio_running = True
         for hook in self._asynio_hooks:
             self._start_hook(hook)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self._asyncio_running = False
         if exc_type is asyncio.CancelledError:
             for hook in self._asynio_hooks:
                 hook.cancel()
@@ -54,6 +59,10 @@ class AbstractContentProvider:
     @classmethod
     def get_aliases(cls):
         return copy.deepcopy(cls._alias)
+
+    async def _notify_all_hooks(self, string):
+        for queue in self._asyncio_queues:
+            queue.put_nowait(string)
 
 
 class PeriodicContentProvider(AbstractContentProvider):
@@ -68,10 +77,45 @@ class PeriodicContentProvider(AbstractContentProvider):
         self.period = 5
 
     async def cycle(self):
-        self._asyncio_running = True
         async with self:
             while True:
                 await asyncio.sleep(self.period)
                 string = await self.get_content()
-                for queue in self._asyncio_queues:
-                    queue.put_nowait(string)
+                await self._notify_all_hooks(string)
+
+
+class BlockingContentProvider(AbstractContentProvider):
+    def __new__(cls, *args, **kwargs):
+        obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
+        obj._content_queue = asyncio.Queue()
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._content_queue = asyncio.Queue()
+
+    def _thread_func(self):
+        async def _coro():
+            while self._asyncio_running:
+                content = await self.get_content()
+                asyncio.run_coroutine_threadsafe(self._content_queue.put(content), self._asyncio_loop)
+
+        asyncio.run(_coro())
+
+    async def __aenter__(self):
+        kek = await super().__aenter__()
+        self._content_queue = asyncio.Queue()
+        return kek
+
+    async def cycle(self):
+        async with self:
+            threading.Thread(target=self._thread_func).start()
+            while True:
+                string = await self._content_queue.get()
+                await self._notify_all_hooks(string)
+
+
+class DummyBlocking(BlockingContentProvider):
+    async def get_content(self):
+        time.sleep(5)
+        return "keki"
