@@ -127,6 +127,6 @@ class ProviderNameDoublingError(NameDoublingError):
 
 
 if __name__ == "__main__":
-    kek = HookAndProviderFactory(provider_paths=["Sites"], hook_paths=["hooks"])
+    kek = HookAndProviderFactory(provider_paths=["providers"], hook_paths=["hooks"])
     provider = kek.create_provider("Dvach", "https://2ch.hk/b/res/219946385.html")
     kek = kek

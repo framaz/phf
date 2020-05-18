@@ -3,10 +3,10 @@ import re
 
 import requests
 
-from provider import AbstractContentProvider
+from provider import PeriodicContentProvider
 
 
-class Dvach(AbstractContentProvider):
+class Dvach(PeriodicContentProvider):
     _alias = ["dv"]
 
     def __init__(self, link, *args, **kwargs):
@@ -51,7 +51,7 @@ class Dvach(AbstractContentProvider):
             res.append(self._full_post_to_short_form(post))
         return res
 
-    def get_site(self):
+    async def get_content(self):
         return self._get_posts()
 
     def __str__(self):
