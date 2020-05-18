@@ -36,8 +36,14 @@ class DvachFileDownloader(DvachShowHook):
             for file in post["files"]:
                 download_path = "2ch.hk" + file["path"]
                 download_to = download_path.split("/")
-                download_to = "downloads/" + download_to[3] + "/" + file["fullname"]
+                if "stickers" in download_to:
+                    download_to = f"downloads/{post['thread_num']}/{download_to[3]}"
+                else:
+                    download_to = "downloads/" + download_to[3] + "/" + file["fullname"]
                 download_list.append((download_path, download_to))
         if len(download_list) == 0:
             return
         await download_files(download_list)
+
+    def __str__(self):
+        return self.__class__.__name__

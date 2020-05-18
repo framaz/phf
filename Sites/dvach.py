@@ -34,13 +34,13 @@ class Dvach(AbstractContentProvider):
         res = re.sub(r"<br>", "\n", res)
         return res
 
-    @staticmethod
-    def _full_post_to_short_form(post_json):
+    def _full_post_to_short_form(self, post_json):
         short_post = dict()
         short_post["date"] = post_json["date"]
         short_post["num"] = post_json["num"]
         short_post["comment"] = Dvach._decode_post(post_json["comment"])
         short_post["files"] = post_json["files"]
+        short_post["thread_num"] = self.thread_num
         return short_post
 
     def _get_posts(self):
@@ -48,8 +48,11 @@ class Dvach(AbstractContentProvider):
         posts = formatted_json["threads"][0]['posts']
         res = []
         for post in posts:
-            res.append(Dvach._full_post_to_short_form(post))
+            res.append(self._full_post_to_short_form(post))
         return res
 
     def get_site(self):
         return self._get_posts()
+
+    def __str__(self):
+        return f"Dvach {self.board} thread {self.thread_num}"

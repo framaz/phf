@@ -38,6 +38,9 @@ class AbstractContentProvider:
         self.__queues.append(hook._AbstractHook__queue)
         self.__tasks.append(asyncio.create_task(hook.cycle_call()))
 
+    def _get_hooks(self):
+        return self.__hooks
+
     def add_hook(self, hook):
         self.__hooks.append(hook)
         if self._asyncio_running:
