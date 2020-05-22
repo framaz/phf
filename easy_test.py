@@ -16,10 +16,8 @@ def _thread_func(message_sys):
         kek += 1
         time.sleep(1)
         print(f"send {kek}")
-        id = message_sys.send_to_provider(kek)
-        res = message_sys.retrieve_result(id - 1)
+        res = message_sys.send_wait_answer(kek)
         print(f"got {res}")
-
 
 
 if __name__ == "__main__":

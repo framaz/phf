@@ -225,6 +225,10 @@ class MessageSystem:
         del self._needed_output_events[message_id]
         return self._result_to_mID_mapping[message_id]
 
+    def send_wait_answer(self, message):
+        msg_id = self.send_to_provider(message)
+        return self.retrieve_result(msg_id)
+
 
 class DummyBlocking(BlockingContentProvider):
     async def get_content(self):
