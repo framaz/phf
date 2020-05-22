@@ -1,7 +1,9 @@
 import asyncio
 import copy
+import queue
 import threading
 import time
+from abc import ABC
 
 
 class AbstractContentProvider:
@@ -30,7 +32,7 @@ class AbstractContentProvider:
         self._asyncio_running = False
         self._asyncio_loop = None
         self._is_with_callback = False
-        if AbstractContentProvider.result_callback == self.__class__.result_callback:
+        if AbstractContentProvider.result_callback != self.__class__.result_callback:
             self._is_with_callback = True
 
     async def get_content(self):
@@ -86,7 +88,7 @@ class AbstractContentProvider:
             queue.put_nowait(string)
 
 
-class PeriodicContentProvider(AbstractContentProvider):
+class PeriodicContentProvider(AbstractContentProvider, ABC):
     def __new__(cls, *args, **kwargs):
         obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
         obj.period = 5
@@ -107,7 +109,7 @@ class PeriodicContentProvider(AbstractContentProvider):
                 await self.result_callback(result)
 
 
-class BlockingContentProvider(AbstractContentProvider):
+class BlockingContentProvider(AbstractContentProvider, ABC):
     def __new__(cls, *args, **kwargs):
         obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
         obj._content_queue = asyncio.Queue()
@@ -138,6 +140,91 @@ class BlockingContentProvider(AbstractContentProvider):
             while True:
                 string = await self._content_queue.get()
                 await self._notify_all_hooks(string)
+
+
+class ComplexDataProvider(AbstractContentProvider):
+    def __new__(cls, *args, **kwargs):
+        obj = PeriodicContentProvider.__new__(cls, *args, **kwargs)
+        obj._input_queue = None
+        obj._output_queue = None
+        obj._message_system = MessageSystem()
+
+        return obj
+
+    async def __aenter__(self):
+        kek = await super().__aenter__()
+        self._input_queue, self._output_queue = await self._message_system.initialize()
+        return kek
+
+    def get_message_system(self):
+        return self._message_system
+
+    async def cycle(self):
+        async with self:
+            while True:
+                content, msg_id = await ComplexDataProvider.get_content(self)
+                await self._notify_all_hooks(content)
+                result = await self._run_result_callback()
+                await ComplexDataProvider.result_callback(self, (result, msg_id))
+
+    async def get_content(self):
+        return await self._input_queue.get()
+
+    async def result_callback(self, results):
+        await self._output_queue.put(results)
+
+
+class MessageSystem:
+    def __init__(self):
+        self._input_queue = None
+        self._output_queue = None
+        self._tmp_queue = queue.Queue()
+        self._message_id = 0
+        self._asyncio_loop = None
+        self._result_to_mID_mapping = {}
+        self._needed_output_events = {}
+        self._lock = threading.Lock()
+        self._task = None
+
+    async def initialize(self):
+        input_queue = asyncio.Queue()
+        self._output_queue = asyncio.Queue()
+        self._asyncio_loop = asyncio.get_event_loop()
+        with self._lock:
+            while not self._tmp_queue.empty():
+                msg = self._tmp_queue.get()
+                input_queue.put_nowait(msg)
+            self._input_queue = input_queue
+        self._task = asyncio.create_task(self.cycle())
+        return self._input_queue, self._output_queue
+
+    def send_to_provider(self, message):
+        if self._input_queue is None:
+            self._tmp_queue.put_nowait((message, self._message_id))
+        else:
+            asyncio.run_coroutine_threadsafe(self._input_queue.put((message, self._message_id)),
+                                             self._asyncio_loop)
+        self._message_id += 1
+        return self._message_id - 1
+
+    async def cycle(self):
+        while True:
+            result, msg_id = await self._output_queue.get()
+            with self._lock:
+                self._result_to_mID_mapping[msg_id] = result
+                if msg_id in self._needed_output_events:
+                    self._needed_output_events[msg_id].set()
+
+    def retrieve_result(self, message_id):
+        cur_event = threading.Event()
+        with self._lock:
+            if message_id in self._result_to_mID_mapping:
+                return self._result_to_mID_mapping[message_id]
+            self._needed_output_events[message_id] = cur_event
+        cur_event.wait()
+        del self._needed_output_events[message_id]
+        return self._result_to_mID_mapping[message_id]
+
 
 class DummyBlocking(BlockingContentProvider):
     async def get_content(self):
