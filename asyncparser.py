@@ -57,8 +57,8 @@ class AsyncParser:
         output['input_command'] = command_dict
         if command_dict['type'] == "new_provider":
             provider = self._providers_and_hooks_factory.create_provider(command_dict['target_class'],
-                                                                         *(command_dict['positionals']),
-                                                                         *(command_dict['keywords']))
+                                                                         (command_dict['positionals']),
+                                                                         (command_dict['keywords']))
             self.add_content_provider(provider)
             output['status'] = "SUCCESS"
             output['message'] = f"Successfully created {str(provider)}"
@@ -67,8 +67,8 @@ class AsyncParser:
             target = command_dict['target_provider_num']
 
             hook = self._providers_and_hooks_factory.create_hook(command_dict['target_class'],
-                                                                 *(command_dict['positionals']),
-                                                                 *(command_dict['keywords']))
+                                                                 (command_dict['positionals']),
+                                                                 (command_dict['keywords']))
             self._providers[target].add_hook(hook)
             output['status'] = "SUCCESS"
             output['message'] = f"Successfully created {str(hook)} and linked" + \
