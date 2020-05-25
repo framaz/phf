@@ -28,6 +28,7 @@ class AsyncParser:
         self._input_sources.append(input_source)
 
     def _run_content_provider(self, content_provider):
+        # TODO provider run itself, not from outside
         content_provider._asyncio_task = asyncio.create_task(content_provider.cycle())
 
     async def _get_action(self, command_queue):
@@ -86,7 +87,7 @@ class AsyncParser:
             provider = self._providers[command_dict['target_provider_num']]
             output['provider'] = str(provider)
             hooks = []
-            for hook in provider._get_hooks():
+            for hook in provider.get_hooks():
                 hooks.append(str(hook))
             output['hooks'] = hooks
         return output

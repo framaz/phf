@@ -1,32 +1,91 @@
+"""Module for data sources.
+
+Now there 3 types of content providers: PeriodicContentProvider, BlockingContentProvider
+and ComplexContentProvider.
+
+PeriodicContentProvider is executed every period seconds. It is supposed to be used with fast,
+non-blocking or async data retrieval.
+
+BlockingContentProvider is executed in cycle lice periodic one, but all waiting should be handled by
+the user. As get_content is executed in a different thread, you should not be afraid of doing some
+blocking IO as it won't block the whole system.
+
+Both of them can be easily created by inheriting and overriding following methods:
+
+- async get_content(self) - function for receiving content, has to be overridden. Returns the data in
+any data form(ie object, dict, str etc). The function's result value is sent to all the hooks. You should
+just form the data in a usable way
+
+- async def result_callback(self, results) - function for handling result of all hooks execution.
+If it's not overridden, then no actions to capture hook execution results is done.
+
+The workflow of the two providers may be described by following code:
+
+    while True:
+        data = get_content()
+        results = []
+        for hook in hooks:
+            results.append(hook.hook_action(data))
+        result_callback(results)
+
+General idea is that get_content just retrieves and transform data to usable form, hook.hook_action
+does the data processing, all needed actions, remote requests etc and result_callback sums up the
+result of hook execution
+
+Work with ComplexContentProvider is much a bit different, it will be described later.
+"""
+from __future__ import annotations
+
 import asyncio
 import copy
 import queue
 import threading
 import time
+import typing
 from abc import ABC
+
+from abstracthook import AbstractHook
 
 
 class AbstractContentProvider:
+    """Basic class for all content providers.
+
+    Should not be directly inherited.
+
+    Attributes:
+        _asynio_hooks: list of all linked hooks.
+        _asyncio_hook_tasks: list of all asyncio.Task for running hooks.
+        _asyncio_straight_queues: list of all asyncio.queues for provider -> hook data .
+        _asyncio_callback_queues: list of all asyncio.queues for hook -> provider data transfer.
+        _asyncio_task: asyncio.Task for provider rinning.
+        _asyncio_running: bool, shows whether the provider is running.
+        _asyncio_loop: tracks in what asyncio.Loop provider is running.
+        _is_with_callback: tracks whether callbacks should be done.
+    """
     _alias = []
 
     def __new__(cls, *args, **kwargs):
+        """Initialize even if user forgets about calling super's __init__."""
         obj = object.__new__(cls)
         obj._asynio_hooks = []
-        obj._asyncio_tasks = []
-        obj._asyncio_queues = []
+        obj._asyncio_hook_tasks = []
+        obj._asyncio_straight_queues = []
         obj._asyncio_callback_queues = []
         obj._asyncio_task = None
         obj._asyncio_running = False
         obj._asyncio_loop = None
         obj._is_with_callback = False
+
+        # Checking if callbacks are needed.
         if AbstractContentProvider.result_callback != cls.result_callback:
             obj._is_with_callback = True
         return obj
 
     def __init__(self, *args, **kwargs):
+        """Construct object."""
         self._asynio_hooks = []
-        self._asyncio_tasks = []
-        self._asyncio_queues = []
+        self._asyncio_hook_tasks = []
+        self._asyncio_straight_queues = []
         self._asyncio_callback_queues = []
         self._asyncio_task = None
         self._asyncio_running = False
@@ -35,16 +94,28 @@ class AbstractContentProvider:
         if AbstractContentProvider.result_callback != self.__class__.result_callback:
             self._is_with_callback = True
 
-    async def get_content(self):
+    async def get_content(self) -> object:
+        """Get content, not implemented.
+
+        Returns:
+            Data in any format.
+            """
         raise NotImplementedError(f"Get_site of {self.__class__} not overridden")
 
-    async def cycle(self):
+    async def cycle(self) -> None:
+        """Main working cycle of provider, not implemented."""
         raise NotImplementedError(f"Cycle of {self.__class__} not overridden")
 
-    async def result_callback(self, results):
+    async def result_callback(self, results: typing.List) -> None:
+        """Do something after all hooks are executed.
+
+        By default it does nothing."""
         pass
 
-    async def _run_result_callback(self):
+    async def _run_result_callback(self) -> typing.List:
+        """Gather all results from all queues
+
+        If provider is without callback, then just empty the queues."""
         if self._is_with_callback:
             results = await asyncio.gather(*[queue.get() for queue in self._asyncio_callback_queues])
             return results
@@ -53,26 +124,47 @@ class AbstractContentProvider:
                 while not queue.empty():
                     await queue.get()
 
-    def _start_hook(self, hook):
-        self._asyncio_queues.append(hook.get_straight_queue())
-        self._asyncio_callback_queues.append(hook.get_callback_queue())
-        self._asyncio_tasks.append(asyncio.create_task(hook.cycle_call()))
+    def _start_hook(self, hook: AbstractHook) -> None:
+        """Start hook and remember it's queues.
 
-    def _get_hooks(self):
+        Has to be called inside an event loop.
+
+        Args:
+            hook: Hook to start(has to be in list of linked hooks)
+        """
+        self._asyncio_straight_queues.append(hook.get_straight_queue())
+        self._asyncio_callback_queues.append(hook.get_callback_queue())
+        self._asyncio_hook_tasks.append(asyncio.create_task(hook.cycle_call()))
+
+    def get_hooks(self) -> typing.List[AbstractHook]:
+        """Return list of all hooks.
+
+        Returns:
+            List of all hooks.
+        """
         return self._asynio_hooks
 
-    def add_hook(self, hook):
+    def add_hook(self, hook: AbstractHook) -> None:
+        """Link hook to provider and start it if provider is started.
+
+        Args:
+            hook: To be added.
+        """
         self._asynio_hooks.append(hook)
         if self._asyncio_running:
             self._start_hook(hook)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
+        """Initialise all in-loop attributes of class."""
         self._asyncio_loop = asyncio.get_event_loop()
         self._asyncio_running = True
         for hook in self._asynio_hooks:
             self._start_hook(hook)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """At the end the decorator stops all hooks.
+
+        If provider raises non asyncio.CancelledError, then everything crashes."""
         self._asyncio_running = False
         if exc_type is asyncio.CancelledError:
             for hook in self._asynio_hooks:
@@ -80,36 +172,71 @@ class AbstractContentProvider:
             return True
 
     @classmethod
-    def get_aliases(cls):
+    def get_aliases(cls) -> typing.List[str]:
+        """Return copy of all class's aliases.
+
+        Returns:
+            List of all aliases of the class.
+        """
         return copy.deepcopy(cls._alias)
 
-    async def _notify_all_hooks(self, string):
-        for queue in self._asyncio_queues:
-            queue.put_nowait(string)
+    async def _notify_all_hooks(self, data: object) -> None:
+        """Send data to all hooks.
+
+        Args:
+            data: what to send to hooks.
+        """
+        for queue in self._asyncio_straight_queues:
+            queue.put_nowait(data)
 
 
 class PeriodicContentProvider(AbstractContentProvider, ABC):
-    def __new__(cls, *args, **kwargs):
+    """Periodically executes get_content every period seconds.
+
+    Attributes:
+        period: period in seconds.
+        """
+
+    def __new__(cls, period=5, *args, **kwargs):
+        """Create new object, defined to let people forget to call super().__init__().
+
+        Args:
+            period: period in seconds.
+        """
         obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
-        obj.period = 5
+        obj.period = period
         return obj
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, period=5, *args, **kwargs):
+        """Create new object.
+
+        Args:
+            period: period in seconds.
+        """
         super().__init__(*args, **kwargs)
+        self.period = period
 
-        self.period = 5
-
-    async def cycle(self):
+    async def cycle(self) -> None:
+        """Do provider's work in cycle."""
         async with self:
             while True:
-                await asyncio.sleep(self.period)
                 string = await self.get_content()
                 await self._notify_all_hooks(string)
                 result = await self._run_result_callback()
                 await self.result_callback(result)
+                await asyncio.sleep(self.period)
 
 
 class BlockingContentProvider(AbstractContentProvider, ABC):
+    """Class for providers that are too slow or have unavoidable blocking IO.
+
+    Get_content and result_callback are executed in different thread to let it block.
+    Hook is still executed in the main thread.
+
+    Attributes:
+        _content_queue: queue from provider's thread to AsyncParser's thread.
+        """
+
     def __new__(cls, *args, **kwargs):
         obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
         obj._content_queue = asyncio.Queue()
@@ -119,8 +246,10 @@ class BlockingContentProvider(AbstractContentProvider, ABC):
         super().__init__(*args, **kwargs)
         self._content_queue = asyncio.Queue()
 
-    def _thread_func(self):
-        async def _coro():
+    def _thread_func(self) -> None:
+        """Do all provider's work."""
+
+        async def _coro() -> None:
             while self._asyncio_running:
                 content = await self.get_content()
                 asyncio.run_coroutine_threadsafe(self._content_queue.put(content), self._asyncio_loop)
@@ -130,11 +259,15 @@ class BlockingContentProvider(AbstractContentProvider, ABC):
         asyncio.run(_coro())
 
     async def __aenter__(self):
+        """Initialise all in-loop attributes of class."""
         kek = await super().__aenter__()
         self._content_queue = asyncio.Queue()
         return kek
 
-    async def cycle(self):
+    async def cycle(self) -> None:
+        """Main work of provider.
+
+        Here it just creates the new thread and gets info from queue"""
         async with self:
             threading.Thread(target=self._thread_func).start()
             while True:
@@ -142,9 +275,9 @@ class BlockingContentProvider(AbstractContentProvider, ABC):
                 await self._notify_all_hooks(string)
 
 
-class ComplexDataProvider(AbstractContentProvider):
+class ComplexContentProvider(AbstractContentProvider):
     def __new__(cls, *args, **kwargs):
-        obj = PeriodicContentProvider.__new__(cls, *args, **kwargs)
+        obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
         obj._input_queue = None
         obj._output_queue = None
         obj._message_system = MessageSystem()
@@ -162,10 +295,10 @@ class ComplexDataProvider(AbstractContentProvider):
     async def cycle(self):
         async with self:
             while True:
-                content, msg_id = await ComplexDataProvider.get_content(self)
+                content, msg_id = await ComplexContentProvider.get_content(self)
                 await self._notify_all_hooks(content)
                 result = await self._run_result_callback()
-                await ComplexDataProvider.result_callback(self, (result, msg_id))
+                await ComplexContentProvider.result_callback(self, (result, msg_id))
 
     async def get_content(self):
         return await self._input_queue.get()

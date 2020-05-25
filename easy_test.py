@@ -4,7 +4,7 @@ import tracemalloc
 
 from abstracthook import BasicPrintHook
 from asyncparser import AsyncParser
-from provider import ComplexDataProvider
+from provider import ComplexContentProvider
 
 tracemalloc.start()
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.import_provider_sources("providers")
 
     hook1, hook2 = BasicPrintHook(), BasicPrintHook()
-    provider = ComplexDataProvider()
+    provider = ComplexContentProvider()
     message_sys = provider.get_message_system()
     threading.Thread(target=_thread_func, args=[message_sys]).start()
     provider.add_hook(hook1)
