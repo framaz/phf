@@ -4,6 +4,14 @@ Now there 3 types of content providers for external usage: PeriodicContentProvid
 BlockingContentProvider and ComplexContentProvider.
 
 PeriodicContentProvider and BlockingContentProvider are subclasses of ConsistentDataProvider.
+ConsistentDataProvider is a provider that can work in the following style:
+
+    while True:
+        data = get_content()
+        results = []
+        for hook in hooks:
+            results.append(hook.hook_action(data))
+        result_callback(results)
 
 PeriodicContentProvider is executed every period seconds. It is supposed to be used with fast,
 non-blocking or async data retrieval.
@@ -22,14 +30,6 @@ just form the data in a usable way
 - async def result_callback(self, results) - function for handling result of all hooks execution.
 If it's not overridden, then no actions to capture hook execution results is done.
 
-The workflow of the two providers may be described by following code:
-
-    while True:
-        data = get_content()
-        results = []
-        for hook in hooks:
-            results.append(hook.hook_action(data))
-        result_callback(results)
 
 General idea is that get_content just retrieves and transform data to usable form, hook.hook_action
 does the data processing, all needed actions, remote requests etc and result_callback sums up the
