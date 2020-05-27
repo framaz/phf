@@ -1,8 +1,9 @@
 import asyncio
-
-import aiohttp
-import aiofiles
 from pathlib import Path
+
+import aiofiles
+import aiohttp
+
 
 async def download_one_file(site, path, session, semaphore):
     await semaphore.acquire()
