@@ -40,6 +40,7 @@ class AbstractHook:
         obj._asyncio_queue = None
         obj._callback_queue = None
         obj._provider = None
+        obj._running = False
         return obj
 
     def __init__(self, *args, **kwargs):
@@ -65,13 +66,23 @@ class AbstractHook:
             self._callback_queue = asyncio.Queue()
         return self._callback_queue
 
+    def _is_running(self) -> bool:
+        """Returns whether hook is running now"""
+        return self._running
+
+    # TODO better stop
+    def stop(self) -> None:
+        """Stops the hook."""
+        self._running = False
+
     async def cycle_call(self) -> None:
         """Make hook start doing its work.
 
         In a cycle hook gets data from provider, executes hook_action and sends it's result
         to provider.
+        Can be stopped.
         """
-        while True:
+        while self._is_running():
             target = await self.get_straight_queue().get()
             result = await self.hook_action(target)
             self.get_callback_queue().put_nowait(result)

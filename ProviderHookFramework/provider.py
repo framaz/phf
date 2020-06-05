@@ -84,21 +84,17 @@ class AbstractContentProvider:
 
     def __init__(self, *args, **kwargs):
         """Construct object."""
-        self._asynio_hooks = []
-        self._asyncio_hook_tasks = []
-        self._asyncio_straight_queues = []
-        self._asyncio_callback_queues = []
-        self._asyncio_task = None
-        self._asyncio_running = False
-        self._asyncio_loop = None
-        self._is_with_callback = False
 
     async def cycle(self) -> None:
-        """Main working cycle of provider, not implemented."""
+        """Main working cycle of provider, not implemented.
+
+        In general, it is executed till stop() is called.
+        """
         raise NotImplementedError(f"Cycle of {self.__class__} not overridden")
 
     async def _run_result_callback(self) -> typing.List:
         """Gather all results from all queues
+
 
         If provider is without callback, then just empty the queues."""
         if self._is_with_callback:
@@ -138,6 +134,15 @@ class AbstractContentProvider:
         self._asynio_hooks.append(hook)
         if self._asyncio_running:
             self._start_hook(hook)
+
+    def _is_running(self) -> bool:
+        """Return whether provider is running now"""
+        return self._asyncio_running
+
+    # TODO better stop
+    def stop(self):
+        """Stop hook from running"""
+        self._asyncio_running = False
 
     async def __aenter__(self) -> None:
         """Initialise all in-loop attributes of class."""
@@ -210,7 +215,7 @@ class PeriodicContentProvider(ConsistentDataProvider, ABC):
         Args:
             period: period in seconds.
         """
-        obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
+        obj = ConsistentDataProvider.__new__(cls, *args, **kwargs)
         obj.period = period
         return obj
 
@@ -224,9 +229,11 @@ class PeriodicContentProvider(ConsistentDataProvider, ABC):
         self.period = period
 
     async def cycle(self) -> None:
-        """Do provider's work in cycle."""
+        """Do provider's work in cycle.
+
+        Can be stopped by self.stop()"""
         async with self:
-            while True:
+            while self._is_running():
                 string = await self.get_content()
                 await self._notify_all_hooks(string)
                 result = await self._run_result_callback()
@@ -245,7 +252,7 @@ class BlockingContentProvider(ConsistentDataProvider, ABC):
         """
 
     def __new__(cls, *args, **kwargs):
-        obj = AbstractContentProvider.__new__(cls, *args, **kwargs)
+        obj = ConsistentDataProvider.__new__(cls, *args, **kwargs)
         obj._content_queue = asyncio.Queue()
         return obj
 
@@ -274,10 +281,11 @@ class BlockingContentProvider(ConsistentDataProvider, ABC):
     async def cycle(self) -> None:
         """Main work of provider.
 
-        Here it just creates the new thread and gets info from queue"""
+        Here it just creates the new thread and gets info from queue.
+        Can be stopped by self.stop()"""
         async with self:
             threading.Thread(target=self._thread_func).start()
-            while True:
+            while self._is_running():
                 string = await self._content_queue.get()
                 await self._notify_all_hooks(string)
 
@@ -327,9 +335,11 @@ class ComplexContentProvider(AbstractContentProvider):
         return self._message_system
 
     async def cycle(self) -> None:
-        """In endless cycle get content, preprocess, send to hook, receive res, postprocess and send."""
+        """In endless cycle get content, preprocess, send to hook, receive res, postprocess and send.
+
+        Can be stopped by self.stop()."""
         async with self:
-            while True:
+            while self._is_running():
                 content, msg_id = await self._input_queue.get()
                 content = await self.preprocess_data(content)
                 await self._notify_all_hooks(content)
@@ -420,6 +430,9 @@ class MessageSystem:
 
         self._task = asyncio.create_task(self._serve_provider_results())
         return self._input_queue, self._output_queue
+
+    def stop(self):
+        self.__init__()
 
     def send_to_provider(self, data: object) -> int:
         """Send message from system to provider.
