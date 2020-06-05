@@ -82,6 +82,7 @@ class AbstractHook:
         to provider.
         Can be stopped.
         """
+        self._running = True
         while self._is_running():
             target = await self.get_straight_queue().get()
             result = await self.hook_action(target)
