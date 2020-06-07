@@ -183,3 +183,23 @@ def run_smth_once():
 
     return _func
 
+
+@pytest.fixture
+def complex_provider_nonstarted():
+    """Fixture to create a complex provider."""
+    return providers.ComplexContentProvider()
+
+
+@pytest.fixture
+def complex_provider():
+    """Fixture to create a complex provider and run it in a different thread."""
+    provider = providers.ComplexContentProvider()
+    event_loop = None
+
+    def _thread_func(cycle_coroutine):
+        asyncio.run(cycle_coroutine)
+
+    thread = threading.Thread(target=_thread_func, args=[provider.cycle()])
+    thread.start()
+    yield provider
+    provider.stop()

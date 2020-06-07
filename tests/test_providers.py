@@ -133,3 +133,69 @@ async def test_message_system_message_and_answer(message_system):
     assert message_system.retrieve_result(1) == 2
     assert message_system.retrieve_result(2) == 3
     assert message_system.retrieve_result(0) == 1
+
+
+def test_nonstarted_complex_provider(complex_provider_nonstarted):
+    message_system = complex_provider_nonstarted.get_message_system()
+    message_system.send_to_provider(0)
+
+    assert message_system._tmp_queue.qsize() == 1
+    assert message_system._input_queue is None
+    assert message_system._output_queue is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("hook_amount", amount_of_hooks)
+async def test_complex_provider(complex_provider, hook_factory, hook_amount):
+    for i in range(hook_amount):
+        hook = await hook_factory.get_hook()
+        complex_provider.add_hook(hook)
+
+    message_system = complex_provider.get_message_system()
+    for i in range(3):
+        res = message_system.send_wait_answer(i + 1)
+        assert res == [i + 1] * hook_amount
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("hook_amount", amount_of_hooks)
+async def test_complex_provider_nonconsistent_message_order(complex_provider,
+                                                            hook_factory,
+                                                            hook_amount):
+    for i in range(hook_amount):
+        hook = await hook_factory.get_hook()
+        complex_provider.add_hook(hook)
+
+    message_system = complex_provider.get_message_system()
+    for i in range(3):
+        msg_id = message_system.send_to_provider(i + 1)
+        assert msg_id == i
+
+    assert message_system.retrieve_result(1) == [2] * hook_amount
+    assert message_system.retrieve_result(2) == [3] * hook_amount
+    assert message_system.retrieve_result(0) == [1] * hook_amount
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("hook_amount", amount_of_hooks)
+async def test_long_working_hook(complex_provider,
+                                 hook_factory,
+                                 hook_amount,
+                                 monkeypatch):
+    async def _long_hook_action(data):
+        await asyncio.sleep(3)
+        return data
+
+    for i in range(hook_amount):
+        hook = await hook_factory.get_hook()
+        monkeypatch.setattr(hook, "hook_action", _long_hook_action)
+        complex_provider.add_hook(hook)
+
+    message_system = complex_provider.get_message_system()
+    for i in range(3):
+        msg_id = message_system.send_to_provider(i + 1)
+        assert msg_id == i
+
+    assert message_system.retrieve_result(1) == [2] * hook_amount
+    assert message_system.retrieve_result(2) == [3] * hook_amount
+    assert message_system.retrieve_result(0) == [1] * hook_amount
