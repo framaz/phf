@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 import typing
 
 import pytest
@@ -27,14 +28,19 @@ class DebugLogging(hooks.AbstractHook):
 class HookFactory:
     """Factory for creation and runing a hook.
 
+    Be aware that get is not a method but a coroutine.
     It event has some cleanup."""
 
     def __init__(self):
         self._tasks = []
 
-    async def get(self):
+    async def get_started_hook(self):
         hook = DebugLogging()
         self._tasks.append(asyncio.Task(hook.cycle_call()))
+        return hook
+
+    async def get_hook(self):
+        hook = DebugLogging()
         return hook
 
     def stop_all(self):

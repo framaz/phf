@@ -5,7 +5,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_hook_action(hook_factory):
-    hook = await hook_factory.get()
+    hook = await hook_factory.get_started_hook()
     in_queue = hook.get_straight_queue()
     out_queue = hook.get_callback_queue()
     message = "test"
@@ -50,7 +50,7 @@ async def test_hook_stopping(hook):
 
 @pytest.mark.asyncio
 async def test_multiple_unconsistent_add_and_retrieve(hook_factory):
-    hook = await hook_factory.get()
+    hook = await hook_factory.get_started_hook()
     in_queue = hook.get_straight_queue()
     out_queue = hook.get_callback_queue()
     results = []

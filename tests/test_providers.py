@@ -46,7 +46,7 @@ async def test_consistent_provider_workflow_hooks_addition_before_cycle(
                         run_smth_once)
 
     for i in range(hook_amount):
-        hook = await hook_factory.get()
+        hook = await hook_factory.get_hook()
         any_nonabstract_consistent_provider.add_hook(hook)
     await any_nonabstract_consistent_provider.cycle()
 
@@ -67,7 +67,7 @@ async def test_consistent_provider_workflow_hooks_addition_after_cycle(
     task = asyncio.Task(any_nonabstract_consistent_provider.cycle())
 
     for i in range(hook_amount):
-        hook = await hook_factory.get()
+        hook = await hook_factory.get_hook()
         any_nonabstract_consistent_provider.add_hook(hook)
 
     await control_func()
@@ -87,7 +87,7 @@ async def test_multiple_in_order(
     task = asyncio.Task(any_nonabstract_consistent_provider.cycle())
 
     for i in range(hook_amount):
-        hook = await hook_factory.get()
+        hook = await hook_factory.get_hook()
         any_nonabstract_consistent_provider.add_hook(hook)
 
     expected_res = []
@@ -107,6 +107,7 @@ async def test_message_system_uninit_message_queueing(message_system):
     assert message_system._tmp_queue.qsize() == msg_amount
 
     await message_system.initialize()
+
     assert message_system._tmp_queue.qsize() == 0
     assert message_system._input_queue.qsize() == msg_amount
 
@@ -121,7 +122,11 @@ async def test_message_system_message_and_answer(message_system):
         message_system.send_to_provider(i + 1)
 
     for i in range(3):
-        await message_system._output_queue.put(await message_system._input_queue.get())
+        msg = await message_system._input_queue.get()
+        assert isinstance(msg, tuple)
+        assert msg[1] == i
+        assert msg[0] == i + 1
+        await message_system._output_queue.put(msg)
 
     await asyncio.sleep(1)  # needed as everything is executed in the same loop
 
