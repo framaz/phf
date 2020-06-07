@@ -43,7 +43,6 @@ import asyncio
 import copy
 import queue
 import threading
-import time
 import typing
 from abc import ABC
 
@@ -113,9 +112,17 @@ class AbstractContentProvider:
         Args:
             hook: Hook to start(has to be in list of linked hooks)
         """
-        self._asyncio_straight_queues.append(hook.get_straight_queue())
-        self._asyncio_callback_queues.append(hook.get_callback_queue())
-        self._asyncio_hook_tasks.append(asyncio.create_task(hook.cycle_call()))
+        if self._asyncio_loop == asyncio.get_event_loop():
+            self._asyncio_straight_queues.append(hook.get_straight_queue())
+            self._asyncio_callback_queues.append(hook.get_callback_queue())
+            self._asyncio_hook_tasks.append(asyncio.create_task(hook.cycle_call()))
+        else:
+            async def _coro():
+                self._asyncio_straight_queues.append(hook.get_straight_queue())
+                self._asyncio_callback_queues.append(hook.get_callback_queue())
+                self._asyncio_hook_tasks.append(asyncio.create_task(hook.cycle_call()))
+
+            asyncio.run_coroutine_threadsafe(_coro(), self._asyncio_loop)
 
     def get_hooks(self) -> typing.List[AbstractHook]:
         """Return list of all hooks.
@@ -320,6 +327,7 @@ class ComplexContentProvider(AbstractContentProvider):
         obj._input_queue = None
         obj._output_queue = None
         obj._message_system = MessageSystem()
+        obj._is_with_callback = True
         return obj
 
     async def __aenter__(self):
@@ -414,7 +422,7 @@ class MessageSystem:
         self._task = None
 
     async def initialize(self):
-        """Initialize everything when in event loop.
+        """Initialize everything when in event loop and start the message system.
 
         All messages that were sent to system before it are not lost.
         """
@@ -495,9 +503,3 @@ class MessageSystem:
         """
         msg_id = self.send_to_provider(data)
         return self.retrieve_result(msg_id)
-
-
-class DummyBlocking(BlockingContentProvider):
-    async def get_content(self):
-        time.sleep(5)
-        return "keki"
