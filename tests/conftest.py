@@ -10,6 +10,7 @@ import ProviderHookFramework.provider as providers
 
 
 class DebugLogging(hooks.AbstractHook):
+    """A debug hook, just logs all inputs and returns it"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logs = []
@@ -24,6 +25,10 @@ class DebugLogging(hooks.AbstractHook):
 
 
 class HookFactory:
+    """Factory for creation and runing a hook.
+
+    It event has some cleanup."""
+
     def __init__(self):
         self._tasks = []
 
@@ -39,6 +44,9 @@ class HookFactory:
 
 @pytest.fixture
 def hook_factory():
+    """Factory creation fixture.
+
+    Cleans uf after yield."""
     factory = HookFactory()
     yield factory
     factory.stop_all()
@@ -46,6 +54,7 @@ def hook_factory():
 
 @pytest.fixture
 def hook():
+    """Fixture for a hook."""
     return DebugLogging()
 
 
@@ -59,6 +68,7 @@ all_abstract_providers = [providers.AbstractContentProvider,
 
 @pytest.fixture(params=all_abstract_providers)
 def any_abstract_provider(request):
+    """Fixture for any type of provider."""
     provider_class = request.param
     if issubclass(provider_class, providers.PeriodicContentProvider):
         provider = provider_class(period=0)
@@ -68,6 +78,7 @@ def any_abstract_provider(request):
 
 
 class NothingPeriodicProvider(providers.PeriodicContentProvider):
+    """Periodic provider, that has logs and just yield numbers 0-1-2..."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logs = []
@@ -83,6 +94,7 @@ class NothingPeriodicProvider(providers.PeriodicContentProvider):
 
 
 class NothingBlockingProvider(providers.BlockingContentProvider):
+    """Blocking provider, that has logs and just yield numbers 0-1-2..."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logs = []
@@ -102,6 +114,7 @@ all_nonabstract_consistent_providers = [NothingPeriodicProvider,
 
 @pytest.fixture(params=all_nonabstract_consistent_providers)
 def any_nonabstract_consistent_provider(request):
+    """Fixture for creating a periodic or blocking content provider."""
     provider_class = request.param
     if issubclass(provider_class, providers.PeriodicContentProvider):
         provider = provider_class(period=0)
@@ -113,7 +126,16 @@ def any_nonabstract_consistent_provider(request):
 
 @pytest.fixture
 def controlled_result_callback_provider(any_nonabstract_consistent_provider,
-                                        monkeypatch):
+                                        monkeypatch) -> (providers.ConsistentDataProvider,
+                                                         typing.Coroutine):
+    """Fixture for creating a controlled provider.
+
+    Creates a blocking or periodic provider. The provider's result_callback will wait till
+    execution of a coroutine.
+
+    Returns:
+        Tuple of provider and coroutine for it's control.
+        """
     event_forth = asyncio.Event()
     event_back = asyncio.Event()
 
@@ -136,12 +158,14 @@ def controlled_result_callback_provider(any_nonabstract_consistent_provider,
 
 @pytest.fixture
 def message_system():
+    """Fixture to create a message system."""
     message_system = providers.MessageSystem()
     return message_system
 
 
 @pytest.fixture
 def run_smth_once():
+    """Fixture to create a function that once yield True and False later."""
     kek = True
 
     def _func():
@@ -152,3 +176,4 @@ def run_smth_once():
         return False
 
     return _func
+
