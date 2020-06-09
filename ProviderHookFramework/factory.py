@@ -148,7 +148,8 @@ class _BasicAnalyser:
 
         It can work with .py files or packages with __init__.py.
         All classes are remembered by their __name__ and _aliases. So if you have
-        a class MyHook and do "tmp_name = MyHook", then MyHook won't be remembered by "tmp_name" alias
+        a class MyHook and do "tmp_name = MyHook", then MyHook won't be remembered by
+        "tmp_name" alias.
         Be warned that this method checks all objects in module's scope.
 
         Example:
@@ -251,7 +252,8 @@ class _HookAnalyser(_BasicAnalyser):
         Returns:
             True if obj is AbstractHook or it's subclass, False otherwise.
         """
-        return issubclass(obj, AbstractHook)
+        from ProviderHookFramework.abstracthook import AbstractHook as AHook
+        return issubclass(obj, AbstractHook) or issubclass(obj, AHook)
 
     @property
     def hooks(self) -> typing.Dict[str, typing.Type[AbstractHook]]:
@@ -281,7 +283,8 @@ class _ProviderAnalyser(_BasicAnalyser):
         Returns:
             True if obj is AbstractContentProvider or it's subclass, False otherwise.
         """
-        return issubclass(obj, AbstractContentProvider)
+        from ProviderHookFramework.provider import AbstractContentProvider as AProv
+        return issubclass(obj, AbstractContentProvider) or issubclass(obj, AProv)
 
     @property
     def providers(self) -> typing.Dict[str, typing.Type[AbstractContentProvider]]:
