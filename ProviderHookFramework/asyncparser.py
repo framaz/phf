@@ -6,11 +6,14 @@ from __future__ import annotations
 
 import asyncio
 import typing
+from typing import TYPE_CHECKING
 
 from commandinput import AbstractCommandInput
 from factory import HookAndProviderFactory
 from provider import AbstractContentProvider
 
+if TYPE_CHECKING:
+    from abstracthook import AbstractHook
 
 class AsyncParser:
     """AsyncParser is environment and main facade of framework.
@@ -47,7 +50,50 @@ class AsyncParser:
         """
         self._providers_and_hooks_factory.import_hook_classes(*args)
 
-    def add_content_provider(self, content_provider: AbstractContentProvider) -> None:
+    def create_provider(self,
+                        class_name: str,
+                        args: list,
+                        kwargs: dict) -> AbstractContentProvider:
+        """Create a provider.
+
+        Just a wrapper around _providers_and_hooks_factory.create_provider
+        Args:
+            class_name: name/alias of provider class to create
+            args: positional arguments for constructor
+            kwargs: keyword arguments for constructor
+
+        Returns:
+            Created provider.
+        """
+        return self._providers_and_hooks_factory.create_provider(
+            class_name,
+            args,
+            kwargs
+        )
+
+    def create_hook(self,
+                    class_name: str,
+                    args: list,
+                    kwargs: dict) -> AbstractHook:
+        """Create a hook.
+
+        Just a wrapper around _providers_and_hooks_factory.create_hook
+        Args:
+            class_name: name/alias of hook class to create
+            args: positional arguments for constructor
+            kwargs: keyword arguments for constructor
+
+        Returns:
+            Created hook.
+        """
+        return self._providers_and_hooks_factory.create_hook(
+            class_name,
+            args,
+            kwargs
+        )
+
+    def add_content_provider(self,
+                             content_provider: AbstractContentProvider) -> None:
         """Add a content provider and run it if AsyncParser is running.
 
         Args:
@@ -67,10 +113,13 @@ class AsyncParser:
         """
         self._input_sources.append(input_source)
 
-    def _run_content_provider(self, content_provider: AbstractContentProvider) -> None:
+    def _run_content_provider(self,
+                              content_provider: AbstractContentProvider) -> None:
         """Run content provider's work coroutine."""
         # TODO provider run itself, not from outside
-        content_provider._asyncio_task = asyncio.create_task(content_provider.cycle())
+        content_provider._asyncio_task = asyncio.create_task(
+            content_provider.cycle()
+        )
 
     # TODO add convertion to command from dict
     async def _get_command(self, command_queue):
@@ -81,7 +130,8 @@ class AsyncParser:
     async def _start_main_coroutine(self) -> None:
         """Main framework's work coroutine.
 
-        It starts all providers and hooks, then it executes commands from command sources.
+        It starts all providers and hooks, then it executes commands from
+        command sources.
         """
         self._running_state = True
         # TODO change it so each inputsource has it's own queues.
@@ -143,7 +193,7 @@ class AsyncParser:
     def start(self):
         """Start work of the framework.
 
-        It is blocking, so if you want to keep code outside of framework running, you should
-        start it in different thread.
+        It is blocking, so if you want to keep code outside of framework running,
+        you should start it in different thread.
         """
         asyncio.run(self._start_main_coroutine())
