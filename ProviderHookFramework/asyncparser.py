@@ -5,6 +5,7 @@ Contains AsyncParser class, which is environment of the framework.
 from __future__ import annotations
 
 import asyncio
+import typing
 
 from commandinput import AbstractCommandInput
 from factory import HookAndProviderFactory
@@ -26,6 +27,9 @@ class AsyncParser:
         self._running_state = False
         self._input_sources = []
         self._providers_and_hooks_factory = HookAndProviderFactory()
+
+    def get_providers(self) -> typing.List[AbstractContentProvider]:
+        return self._providers[:]
 
     def import_provider_sources(self, *args) -> None:
         """Read providers from paths
