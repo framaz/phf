@@ -4,7 +4,11 @@ from ProviderHookFramework.provider import BlockingContentProvider
 
 class Hook1(AbstractHook):
     _alias = ["hook"]
-    pass
+
+    def __init__(self, a, b=3, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.a = a
+        self.b = b
 
 
 class NonHook1:
@@ -12,6 +16,11 @@ class NonHook1:
 
 
 class Provider1(BlockingContentProvider):
+    def __init__(self, a, b=3, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.a = a
+        self.b = b
+
     pass
 
 

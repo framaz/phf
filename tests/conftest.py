@@ -7,6 +7,7 @@ import typing
 import pytest
 
 import ProviderHookFramework.abstracthook as hooks
+import ProviderHookFramework.factory as factory
 import ProviderHookFramework.provider as providers
 
 
@@ -203,3 +204,11 @@ def complex_provider():
     thread.start()
     yield provider
     provider.stop()
+
+
+@pytest.fixture(scope="session")
+def hook_provider_factory():
+    """Creates a ready to use HookAndProviderFactory.
+
+    The factory has already read all needed providers and hooks."""
+    return factory.HookAndProviderFactory(["factory_obj"], ["factory_obj"])
