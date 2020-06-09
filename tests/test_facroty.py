@@ -21,6 +21,7 @@ def test_add_class_to_dict():
 
 
 class TestHookAnalyser:
+    """Tests for _HookAnalyser class."""
     def test_hook_class_checker(self, hook):
         analyser = factory._HookAnalyser()
         assert analyser.right_class_type(hook.__class__)
@@ -45,6 +46,7 @@ class TestHookAnalyser:
 
 
 class TestProviderAnalyser:
+    """Tests for _ProviderAnalyser class."""
     def test_provider_class_checker(self, complex_provider):
         analyser = factory._ProviderAnalyser()
         assert analyser.right_class_type(complex_provider.__class__)
@@ -60,6 +62,7 @@ class TestProviderAnalyser:
 
 
 class TestFactory:
+    """Tests for HookAndProviderFactory."""
     def test_factory_constructor(self):
         fact = factory.HookAndProviderFactory(["factory_obj"], ["factory_obj"])
         hooks = Counter(fact._hookAnalyser.get_hooks().keys())
@@ -90,6 +93,7 @@ class TestFactory:
         assert hooks == Counter(provider_names)
 
     class TestHookCreation:
+        """Tests for hook creation."""
         def test_nonexistent_hook_creation(self, hook_provider_factory):
             with pytest.raises(KeyError):
                 hook_provider_factory.create_hook("azaza", [], {})
@@ -116,6 +120,7 @@ class TestFactory:
             assert hook.b == 0
 
     class TestProviderCreation:
+        """Tests for provider creation."""
         def test_nonexistent_provider_creation(self, hook_provider_factory):
             with pytest.raises(KeyError):
                 hook_provider_factory.create_provider("azaza", [], {})

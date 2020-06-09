@@ -6,6 +6,7 @@ from ProviderHookFramework.provider import BlockingContentProvider
 
 
 class TestBasicForAllProviders:
+    """Tests that all providers should pass."""
     def test_aliases(self, any_abstract_provider):
         assert any_abstract_provider.get_aliases() == \
                any_abstract_provider.__class__._alias
@@ -32,6 +33,11 @@ amount_of_hooks = [0, 1, 2]
 
 
 class TestConsistentProviders:
+    """Tests for consistent providers.
+
+    Include tests for hook addition before/after start of providers
+    """
+
     @pytest.mark.asyncio
     @pytest.mark.parametrize("hook_amount", amount_of_hooks)
     async def test_consistent_provider_workflow_hooks_addition_before_cycle(
@@ -77,7 +83,7 @@ class TestConsistentProviders:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("hook_amount", amount_of_hooks)
-    async def test_multiple_in_order(
+    async def test_multiple_evokes_in_order(
             self,
             hook_amount,
             hook_factory,
@@ -101,7 +107,17 @@ class TestConsistentProviders:
 
 
 class TestComplexContentProvider:
+    """Tests for ComplexContentProvider.
+
+    Also includes MessageSystem tests."""
+
     class TestMessageSystem:
+        """Message system tests.
+
+        Include tests for remembering messages before message system init,
+        right mapping of msg_id and msg answer.
+        """
+
         @pytest.mark.asyncio
         async def test_message_system_uninit_message_queueing(self,
                                                               message_system):

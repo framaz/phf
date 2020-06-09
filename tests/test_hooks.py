@@ -4,6 +4,7 @@ import pytest
 
 
 class TestHooks:
+    """Tests for hooks."""
     @pytest.mark.asyncio
     async def test_hook_action(self, hook_factory):
         hook = await hook_factory.get_started_hook()
