@@ -101,7 +101,7 @@ class HookAndProviderFactory:
 
         all_hooks = self._hookAnalyser.get_hooks()
         if hook_alias not in all_hooks:
-            raise Exception(f'No hook named "{hook_alias}"')
+            raise KeyError(f'No hook named "{hook_alias}"')
 
         return all_hooks[hook_alias](*args, **kwargs)
 
@@ -125,7 +125,7 @@ class HookAndProviderFactory:
 
         all_providers = self._providerAnalyser.get_providers()
         if provider_alias not in all_providers:
-            raise Exception(f'No hook named "{provider_alias}"')
+            raise KeyError(f'No provider named "{provider_alias}"')
 
         return all_providers[provider_alias](*args, **kwargs)
 
