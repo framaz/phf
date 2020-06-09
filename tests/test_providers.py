@@ -176,6 +176,7 @@ async def test_complex_provider_nonconsistent_message_order(complex_provider,
     assert message_system.retrieve_result(0) == [1] * hook_amount
 
 
+@pytest.mark.slow_test
 @pytest.mark.asyncio
 @pytest.mark.parametrize("hook_amount", amount_of_hooks)
 async def test_long_working_hook(complex_provider,
