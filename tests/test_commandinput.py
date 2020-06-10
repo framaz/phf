@@ -33,8 +33,8 @@ class TestCommands:
         command2 = commandinput.ListProvidersCommand()
         provider1 = periodic_provider_factory.get_provider()
         provider2 = periodic_provider_factory.get_provider()
-        fake_started_async_phfsys.add_content_provider(provider1)
-        fake_started_async_phfsys.add_content_provider(provider2)
+        fake_started_async_phfsys.add_provider(provider1)
+        fake_started_async_phfsys.add_provider(provider2)
 
         res2 = command2.execute_command(fake_started_async_phfsys)
         assert res2 == [provider1, provider2]
@@ -48,7 +48,7 @@ class TestCommands:
                                     hook_factory):
         for i in range(3):
             provider = periodic_provider_factory.get_provider()
-            fake_started_async_phfsys.add_content_provider(provider)
+            fake_started_async_phfsys.add_provider(provider)
 
         hook1 = hook_factory.get_hook()
         fake_started_async_phfsys.get_providers()[1].add_hook(hook1)

@@ -93,8 +93,8 @@ class PHFSystem:
             kwargs
         )
 
-    def add_content_provider(self,
-                             content_provider: AbstractContentProvider) -> None:
+    def add_provider(self,
+                     content_provider: AbstractContentProvider) -> None:
         """Add a content provider and run it if PHFSystem is running.
 
         Args:
@@ -159,7 +159,7 @@ class PHFSystem:
             provider = self._providers_and_hooks_factory.create_provider(command_dict['target_class'],
                                                                          (command_dict['positionals']),
                                                                          (command_dict['keywords']))
-            self.add_content_provider(provider)
+            self.add_provider(provider)
             output['status'] = "SUCCESS"
             output['message'] = f"Successfully created {str(provider)}"
 

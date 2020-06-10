@@ -255,7 +255,7 @@ class NewProviderCommand(Command):
         self._provider = phfsys.create_provider(self._class_name,
                                                 self._args,
                                                 self._kwargs)
-        phfsys.add_content_provider(self._provider)
+        phfsys.add_provider(self._provider)
         return self._provider
 
 
