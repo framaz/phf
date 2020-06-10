@@ -256,7 +256,7 @@ class NewProviderCommand(Command):
                                                 self._args,
                                                 self._kwargs)
         parser.add_content_provider(self._provider)
-        return "SUCCESS"
+        return self._provider
 
 
 class NewHookCommand(Command):
@@ -307,4 +307,5 @@ class NewHookCommand(Command):
         self._hook = parser.create_hook(self._class_name,
                                         self._args,
                                         self._kwargs)
-        return "SUCCESS"
+        self._provider.add_hook(self._hook)
+        return self._hook
