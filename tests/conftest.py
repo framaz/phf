@@ -129,6 +129,20 @@ class NothingBlockingProvider(providers.BlockingContentProvider):
         self.logs.append(results)
 
 
+class PeriodicProviderFactory:
+    """Creates periodic providers."""
+
+    def get_provider(self):
+        """Create periodic provider."""
+        return NothingPeriodicProvider()
+
+
+@pytest.fixture
+def periodic_provider_factory():
+    """Fixture to create PeriodicProviderFactory."""
+    return PeriodicProviderFactory()
+
+
 all_nonabstract_consistent_providers = [NothingPeriodicProvider,
                                         NothingBlockingProvider]
 
@@ -226,3 +240,12 @@ def hook_provider_factory():
 
     The factory has already read all needed providers and hooks."""
     return factory.HookAndProviderFactory(["factory_obj"], ["factory_obj"])
+
+
+@pytest.fixture
+def fake_started_async_parser():
+    parser = AsyncParser()
+    parser._running_state = True
+    parser.import_hook_sources("factory_obj")
+    parser.import_provider_sources("factory_obj")
+    return parser

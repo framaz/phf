@@ -10,6 +10,9 @@ class Hook1(AbstractHook):
         self.a = a
         self.b = b
 
+    async def hook_action(self, data):
+        return data
+
 
 class NonHook1:
     pass
@@ -20,6 +23,9 @@ class Provider1(BlockingContentProvider):
         super().__init__(*args, **kwargs)
         self.a = a
         self.b = b
+
+    async def get_content(self) -> object:
+        return "a"
 
     pass
 
