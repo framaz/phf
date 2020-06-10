@@ -136,8 +136,9 @@ class Command:
 
     def execute_command(self, parser: AsyncParser):
         """Execute a command."""
-        self._apply(parser)
+        result = self._apply(parser)
         self._executed = True
+        return result
 
     def _apply(self, parser: AsyncParser):
         """What exactly the command does.
