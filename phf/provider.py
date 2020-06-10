@@ -310,7 +310,7 @@ class ComplexContentProvider(AbstractContentProvider):
     inside PHFSystem.
 
     If you want to somehow preprocess data, sent to provider by message system, you should
-    override method get_message_system(self, content).
+    override method preprocess_data(self, content).
 
     If you want to somehow postrpocess results of hooks before sending to message system,
     you should override method postprocess_result(self, results).
