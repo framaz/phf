@@ -72,7 +72,7 @@ class TestConsistentProviders:
     ):
         any_nonabstract_consistent_provider, control_func = \
             controlled_result_callback_provider
-        task = asyncio.Task(any_nonabstract_consistent_provider.cycle())
+        asyncio.Task(any_nonabstract_consistent_provider.cycle())
 
         for i in range(hook_amount):
             hook = await hook_factory.get_hook()
@@ -92,7 +92,7 @@ class TestConsistentProviders:
         times = 3
         any_nonabstract_consistent_provider, control_func = \
             controlled_result_callback_provider
-        task = asyncio.Task(any_nonabstract_consistent_provider.cycle())
+        asyncio.Task(any_nonabstract_consistent_provider.cycle())
 
         for i in range(hook_amount):
             hook = await hook_factory.get_hook()

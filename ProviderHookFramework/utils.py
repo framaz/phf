@@ -46,7 +46,7 @@ async def download_files(site_paths, file_paths=None, max_objects_at_once=5):
 
 if __name__ == "__main__":
     async def test():
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession():
             await download_files(["http://2ch.hk/po/src/37636569/15889617915020.png",
                                   "http://2ch.hk/po/src/37636569/15889618552310.jpg"],
                                  ["downloads/azaza/kek.png", "downloads/azaza/keks.png"])

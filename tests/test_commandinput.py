@@ -18,7 +18,7 @@ class TestCommands:
         monkeypatch.setattr(command, "_apply", lambda x: "a")
         res = command.execute_command(fake_started_async_phfsys)
         assert res == "a"
-        assert command._executed == True
+        assert command._executed
 
     @pytest.mark.asyncio
     async def test_ListProvidersCommand(self,

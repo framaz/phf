@@ -1,13 +1,15 @@
+from abc import ABC
+
 from ProviderHookFramework.abstracthook import AbstractHook
 
 
-class Hook2(AbstractHook):
+class Hook2(AbstractHook, ABC):
     pass
 
 
-class HookNoPass(AbstractHook):
+class HookNoPass(AbstractHook, ABC):
     pass
 
 
-class HookCopyAlias(AbstractHook):
+class HookCopyAlias(AbstractHook, ABC):
     _alias = ["hook"]

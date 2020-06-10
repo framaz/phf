@@ -66,9 +66,9 @@ def hook_factory():
     """Factory creation fixture.
 
     Cleans uf after yield."""
-    factory = HookFactory()
-    yield factory
-    factory.stop_all()
+    cur_factory = HookFactory()
+    yield cur_factory
+    cur_factory.stop_all()
 
 
 @pytest.fixture
@@ -223,7 +223,6 @@ def complex_provider_nonstarted():
 def complex_provider():
     """Fixture to create a complex provider and run it in a different thread."""
     provider = providers.ComplexContentProvider()
-    event_loop = None
 
     def _thread_func(cycle_coroutine):
         asyncio.run(cycle_coroutine)

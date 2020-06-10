@@ -335,7 +335,7 @@ class ComplexContentProvider(AbstractContentProvider):
 
         Message system is also fully initialized for the use here.
         """
-        kek = await super().__aenter__()
+        await super().__aenter__()
         self._input_queue, self._output_queue = await self._message_system.initialize()
 
     def get_message_system(self) -> MessageSystem:
