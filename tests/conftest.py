@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
 import typing
 
@@ -9,10 +10,21 @@ import pytest
 import ProviderHookFramework.abstracthook as hooks
 import ProviderHookFramework.factory as factory
 import ProviderHookFramework.provider as providers
+from ProviderHookFramework.asyncparser import AsyncParser
+
+
+@pytest.fixture(autouse=True, scope="session")
+def working_dir():
+    directory = os.getcwd()
+    if not directory.endswith("tests"):
+        os.chdir(os.path.join(directory, "tests"))
+    yield
+    os.chdir(directory)
 
 
 class DebugLogging(hooks.AbstractHook):
     """A debug hook, just logs all inputs and returns it"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logs = []
@@ -86,6 +98,7 @@ def any_abstract_provider(request):
 
 class NothingPeriodicProvider(providers.PeriodicContentProvider):
     """Periodic provider, that has logs and just yield numbers 0-1-2..."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logs = []
@@ -102,6 +115,7 @@ class NothingPeriodicProvider(providers.PeriodicContentProvider):
 
 class NothingBlockingProvider(providers.BlockingContentProvider):
     """Blocking provider, that has logs and just yield numbers 0-1-2..."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logs = []
