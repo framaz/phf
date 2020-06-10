@@ -252,7 +252,7 @@ class _HookAnalyser(_BasicAnalyser):
         Returns:
             True if obj is AbstractHook or it's subclass, False otherwise.
         """
-        from ProviderHookFramework.abstracthook import AbstractHook as AHook
+        from phf.abstracthook import AbstractHook as AHook
         return issubclass(obj, AbstractHook) or issubclass(obj, AHook)
 
     @property
@@ -283,7 +283,7 @@ class _ProviderAnalyser(_BasicAnalyser):
         Returns:
             True if obj is AbstractContentProvider or it's subclass, False otherwise.
         """
-        from ProviderHookFramework.provider import AbstractContentProvider as AProv
+        from phf.provider import AbstractContentProvider as AProv
         return issubclass(obj, AbstractContentProvider) or issubclass(obj, AProv)
 
     @property

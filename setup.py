@@ -1,9 +1,9 @@
 import setuptools
 
 setuptools.setup(
-    name='ProviderHookFramework',
+    name='phf',
     version='0.0.0',
-    packages=['ProviderHookFramework'],
+    packages=['phf'],
     package_dir={},
     url='https://github.com/framaz/AsyncSiteParser',
     license='MIT License',

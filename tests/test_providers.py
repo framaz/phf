@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from ProviderHookFramework.provider import BlockingContentProvider
+from phf.provider import BlockingContentProvider
 
 
 class TestBasicForAllProviders:

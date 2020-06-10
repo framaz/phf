@@ -1,6 +1,6 @@
 from abc import ABC
 
-from ProviderHookFramework.abstracthook import AbstractHook
+from phf.abstracthook import AbstractHook
 
 
 class Hook2(AbstractHook, ABC):

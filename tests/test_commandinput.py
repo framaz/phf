@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from ProviderHookFramework import commandinput
+from phf import commandinput
 
 
 class TestCommands:

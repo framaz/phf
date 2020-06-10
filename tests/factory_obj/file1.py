@@ -1,5 +1,5 @@
-from ProviderHookFramework.abstracthook import AbstractHook
-from ProviderHookFramework.provider import BlockingContentProvider
+from phf.abstracthook import AbstractHook
+from phf.provider import BlockingContentProvider
 
 
 class Hook1(AbstractHook):

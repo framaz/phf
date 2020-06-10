@@ -7,10 +7,10 @@ import typing
 
 import pytest
 
-import ProviderHookFramework.abstracthook as hooks
-import ProviderHookFramework.factory as factory
-import ProviderHookFramework.provider as providers
-from ProviderHookFramework.phfsystem import PHFSystem
+import phf.abstracthook as hooks
+import phf.factory as factory
+import phf.provider as providers
+from phf.phfsystem import PHFSystem
 
 
 @pytest.fixture(autouse=True, scope="session")

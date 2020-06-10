@@ -2,8 +2,8 @@ from collections import Counter
 
 import pytest
 
-from ProviderHookFramework import factory
 from factory_obj.file1 import Hook1, Provider1
+from phf import factory
 
 hook_names = ["hook", "Hook1", "Hook2", "AbstractHook"]
 provider_names = ["Provider1", "BlockingContentProvider"]
