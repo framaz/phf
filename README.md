@@ -119,3 +119,7 @@ result = message_sys.retrieve_result(msg_id)
 You may also just use ```MessageSystem.send_wait_answer(data)```, which sends a message 
 and waits for result. 
 
+If you want to somehow modify the data, that was sent to the ComplexContentProvider or
+result that will be sent back, you can overrider:
+* ```async def preprocess_data(self, content: object)```
+* ```async def postprocess_result(self, results: typing.List[object]) -> object:```
