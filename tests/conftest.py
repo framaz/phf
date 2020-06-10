@@ -10,7 +10,7 @@ import pytest
 import ProviderHookFramework.abstracthook as hooks
 import ProviderHookFramework.factory as factory
 import ProviderHookFramework.provider as providers
-from ProviderHookFramework.asyncparser import AsyncParser
+from ProviderHookFramework.phfsystem import PHFSystem
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -243,9 +243,9 @@ def hook_provider_factory():
 
 
 @pytest.fixture
-def fake_started_async_parser():
-    parser = AsyncParser()
-    parser._running_state = True
-    parser.import_hook_sources("factory_obj")
-    parser.import_provider_sources("factory_obj")
-    return parser
+def fake_started_async_phfsys():
+    phfsys = PHFSystem()
+    phfsys._running_state = True
+    phfsys.import_hook_sources("factory_obj")
+    phfsys.import_provider_sources("factory_obj")
+    return phfsys

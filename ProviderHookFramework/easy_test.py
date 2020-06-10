@@ -3,7 +3,7 @@ import time
 import tracemalloc
 
 from abstracthook import BasicPrintHook
-from asyncparser import AsyncParser
+from phfsystem import PHFSystem
 from provider import ComplexContentProvider
 
 tracemalloc.start()
@@ -21,9 +21,9 @@ def _thread_func(message_sys):
 
 
 if __name__ == "__main__":
-    parser = AsyncParser()
-    parser.import_hook_sources("hooks")
-    parser.import_provider_sources("providers")
+    phfsys = PHFSystem()
+    phfsys.import_hook_sources("hooks")
+    phfsys.import_provider_sources("providers")
 
     hook1, hook2 = BasicPrintHook(), BasicPrintHook()
     provider = ComplexContentProvider()
@@ -31,5 +31,5 @@ if __name__ == "__main__":
     threading.Thread(target=_thread_func, args=[message_sys]).start()
     provider.add_hook(hook1)
     provider.add_hook(hook2)
-    parser.add_content_provider(provider)
-    parser.start()
+    phfsys.add_content_provider(provider)
+    phfsys.start()

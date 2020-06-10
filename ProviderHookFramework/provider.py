@@ -255,7 +255,7 @@ class BlockingContentProvider(ConsistentDataProvider, ABC):
     Hook is still executed in the main thread.
 
     Attributes:
-        _content_queue: queue from provider's thread to AsyncParser's thread.
+        _content_queue: queue from provider's thread to PHFSystem's thread.
         """
 
     def __new__(cls, *args, **kwargs):
@@ -304,10 +304,10 @@ class ComplexContentProvider(AbstractContentProvider):
     external source with a help of message queue system.
 
     To get the message system after object creation, call get_message_system BEFORE RUNNING
-    AsyncParser.
+    PHFSystem.
 
     The class should not be created in the runtime as there is no way to get the message system
-    inside AsyncParser.
+    inside PHFSystem.
 
     If you want to somehow preprocess data, sent to provider by message system, you should
     override method get_message_system(self, content).
@@ -396,7 +396,7 @@ class MessageSystem:
     Attributes:
         _input_queue: asyncio.Queue from message system to provider.
         _output_queue: asyncio.Queue from provider to message system.
-        _tmp_queue: queue.Queue object for temporal data transfer before AsyncParser starts.
+        _tmp_queue: queue.Queue object for temporal data transfer before PHFSystem starts.
         _message_id: amount of sent messages, also serves as id to next message.
         _asyncio_loop: asyncio.Loop, in which the MessageSystem works.
         _result_to_mID_mapping: dict, used to store answers to messages by their id.
@@ -445,7 +445,7 @@ class MessageSystem:
     def send_to_provider(self, data: object) -> int:
         """Send message from system to provider.
 
-        Don't be afraid of sending messages before start of AsyncParser's work,
+        Don't be afraid of sending messages before start of PHFSystem's work,
         the messages will be remembered anyways.
 
         Args:

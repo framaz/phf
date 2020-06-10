@@ -10,7 +10,7 @@ class AbstractHook:
 
     To make a hook, user should inherit this class and override async method hook_action(self, data).
 
-    It can be created manually before the start of AsyncParser work and connected to a provider
+    It can be created manually before the start of PHFSystem work and connected to a provider
     or it can be created dynamically with help AbstractCommandInput's inhabitants.
     To make dynamical creation of hooks, they can have aliases set in _alias as a list of string.
 

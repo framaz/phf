@@ -1,6 +1,6 @@
 """Main module of the framework.
 
-Contains AsyncParser class, which is environment of the framework.
+Contains PHFSystem class, which is environment of the framework.
 """
 from __future__ import annotations
 
@@ -15,8 +15,9 @@ from provider import AbstractContentProvider
 if TYPE_CHECKING:
     from abstracthook import AbstractHook
 
-class AsyncParser:
-    """AsyncParser is environment and main facade of framework.
+
+class PHFSystem:
+    """PHFSystem is environment and main facade of framework.
 
     Attributes:
         _providers: list of all providers.
@@ -94,7 +95,7 @@ class AsyncParser:
 
     def add_content_provider(self,
                              content_provider: AbstractContentProvider) -> None:
-        """Add a content provider and run it if AsyncParser is running.
+        """Add a content provider and run it if PHFSystem is running.
 
         Args:
             content_provider: provider to add.
@@ -106,7 +107,7 @@ class AsyncParser:
     def add_input_source(self, input_source: AbstractCommandInput):
         """Add an input source.
 
-        Note that input sources have to be created before starting AsyncParser.
+        Note that input sources have to be created before starting PHFSystem.
 
         Args:
             input_source: input source to add.

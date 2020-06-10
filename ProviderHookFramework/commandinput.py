@@ -8,18 +8,18 @@ from typing import TYPE_CHECKING
 from aioconsole import ainput
 
 if TYPE_CHECKING:
-    from asyncparser import AsyncParser
+    from phfsystem import PHFSystem
 
 
 class AbstractCommandInput:
     """A class for command inputs.
 
-    This class provides means to input commands to AsyncParser.
+    This class provides means to input commands to PHFSystem.
     It is a bit similar to ConsistentDataProvider, but no hooks can be attached to it.
 
     Attributes:
-        _asyncio_command_queue: asyncio.Queue to send command to AsyncParser.
-        _asyncio_result_queue: asyncio.Queue receive result from AsyncParser.
+        _asyncio_command_queue: asyncio.Queue to send command to PHFSystem.
+        _asyncio_result_queue: asyncio.Queue receive result from PHFSystem.
         _command_input_task: asyncio.Task for input's running.
     """
 
@@ -72,8 +72,8 @@ class AbstractCommandInput:
         """Start current command input source when in event loop.
 
         Args:
-            command_queue: queue to send command to AsyncParser.
-            result_queue: queue to receive command execution result from AsyncParser.
+            command_queue: queue to send command to PHFSystem.
+            result_queue: queue to receive command execution result from PHFSystem.
         """
         self._asyncio_command_queue = command_queue
         self._asyncio_result_queue = result_queue
@@ -114,9 +114,9 @@ class Command:
     """A class for commands.
 
     To implement a command one should override it's _apply method.
-    Apply method takes a single argument - parser, somehow modifies it
+    Apply method takes a single argument - PHFsystem, somehow modifies it
     and returns result of executing the operation.
-    Execute_command should be used for running the command on AsyncParser.
+    Execute_command should be used for running the command on PHFSystem.
 
     Attributes:
         _cur_time: datetime, time when the command was created.
@@ -134,19 +134,19 @@ class Command:
         self._source = source
         self._executed = False
 
-    def execute_command(self, parser: AsyncParser):
+    def execute_command(self, phfsys: PHFSystem):
         """Execute a command."""
-        result = self._apply(parser)
+        result = self._apply(phfsys)
         self._executed = True
         return result
 
-    def _apply(self, parser: AsyncParser):
+    def _apply(self, phfsys: PHFSystem):
         """What exactly the command does.
 
         Override this when you create new command.
 
         Args:
-            parser: on which AsyncParser to execute the command.
+            phfsys: on which PHFSystem to execute the command.
         """
         raise NotImplementedError(f"Call of unimplemented "
                                   f"{self.__class__.__name__}.apply(...)")
@@ -169,13 +169,13 @@ class ListProvidersCommand(Command):
         super().__init__(source)
         self._data = None
 
-    def _apply(self, parser: AsyncParser):
-        """Get all providers of parser.
+    def _apply(self, phfsys: PHFSystem):
+        """Get all providers of phfsys.
 
         Args:
-            parser: on which AsyncParser to execute the command.
+            phfsys: on which PHFSystem to execute the command.
         """
-        self._data = parser.get_providers()
+        self._data = phfsys.get_providers()
         return self._data
 
 
@@ -185,7 +185,7 @@ class ListHooksCommand(Command):
     Attributes:
         _provider: AbstractContentProvider, whose hooks to get.
         _hooks: List[AbstractHook], list of hooks.
-        _target_provider_num: int, targeted provider's number in parser's
+        _target_provider_num: int, targeted provider's number in phfsys's
             providers list.
     """
 
@@ -195,7 +195,7 @@ class ListHooksCommand(Command):
         """Create the command.
 
        Args:
-           target_provider_num: targeted provider's number in parser's
+           target_provider_num: targeted provider's number in phfsys's
                 providers list.
            source: what created the command.
        """
@@ -205,19 +205,19 @@ class ListHooksCommand(Command):
         self._provider = None
         self._hooks = None
 
-    def _apply(self, parser: AsyncParser):
-        """Get providers of concrete parser.
+    def _apply(self, phfsys: PHFSystem):
+        """Get providers of concrete phfsys.
 
         Args:
-            parser: on which AsyncParser to execute the command.
+            phfsys: on which PHFSystem to execute the command.
         """
-        self._provider = parser.get_providers()[self._target_provider_num]
+        self._provider = phfsys.get_providers()[self._target_provider_num]
         self._hooks = self._provider.get_hooks()[:]
         return self._hooks
 
 
 class NewProviderCommand(Command):
-    """Create a new provider, add it to parser and start it.
+    """Create a new provider, add it to phfsys and start it.
 
     Attributes:
         _class_name: str, name/alias of provider class to create.
@@ -246,16 +246,16 @@ class NewProviderCommand(Command):
         self._kwargs = kwargs
         self._provider = None
 
-    def _apply(self, parser: AsyncParser):
-        """Create provider and add it to parser.
+    def _apply(self, phfsys: PHFSystem):
+        """Create provider and add it to phfsys.
 
         Args:
-            parser: on which AsyncParser to execute the command.
+            phfsys: on which PHFSystem to execute the command.
         """
-        self._provider = parser.create_provider(self._class_name,
+        self._provider = phfsys.create_provider(self._class_name,
                                                 self._args,
                                                 self._kwargs)
-        parser.add_content_provider(self._provider)
+        phfsys.add_content_provider(self._provider)
         return self._provider
 
 
@@ -264,7 +264,7 @@ class NewHookCommand(Command):
 
     Attributes:
         _class_name: str, name/alias of hook class to create.
-        _provider_num: int, targeted provider's number in parser's
+        _provider_num: int, targeted provider's number in phfsys's
             providers list.
         _args: list, positional arguments for constructor.
         _kwargs: dict, keyword arguments for constructor.
@@ -282,7 +282,7 @@ class NewHookCommand(Command):
 
         Args:
             class_name: name/alias of hook class to create.
-            provider_num: int, targeted provider's number in parser's
+            provider_num: int, targeted provider's number in phfsys's
                 providers list.
             args: list, positional arguments for constructor.
             kwargs: dict, keyword arguments for constructor.
@@ -297,14 +297,14 @@ class NewHookCommand(Command):
         self._provider = None
         self._hook = None
 
-    def _apply(self, parser: AsyncParser):
+    def _apply(self, phfsys: PHFSystem):
         """Create hook, add it to provider and start it.
 
         Args:
-            parser: on which AsyncParser to execute the command.
+            phfsys: on which PHFSystem to execute the command.
         """
-        self._provider = parser.get_providers()[self._provider_num]
-        self._hook = parser.create_hook(self._class_name,
+        self._provider = phfsys.get_providers()[self._provider_num]
+        self._hook = phfsys.create_hook(self._class_name,
                                         self._args,
                                         self._kwargs)
         self._provider.add_hook(self._hook)

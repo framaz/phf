@@ -18,9 +18,9 @@ class HookAndProviderFactory:
     """Factory to create hooks and providers.
 
     Works as a facade for _HookAnalyser and _ProviderAnalyser.
-    All runtime hook and provider creation in AsyncParser a made with this factory.
+    All runtime hook and provider creation in PHFSystem a made with this factory.
     The user doesnt have to directly interact with HookAndProviderFactory objects as
-    AsyncParser crates the factory and works with the factory itself. AsyncParser also
+    PHFSystem crates the factory and works with the factory itself. PHFSystem also
     provides interface for reading hooks and providers from directories/files/packages.
 
     Usage tutorial:
