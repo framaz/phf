@@ -8,7 +8,7 @@ import asyncio
 import typing
 from typing import TYPE_CHECKING
 
-from commandinput import AbstractCommandInput
+from commandinput import AbstractCommandInput, Command
 from factory import HookAndProviderFactory
 from provider import AbstractContentProvider
 
@@ -24,6 +24,8 @@ class PHFSystem:
         _running_state: state, shows if framework is running now.
         _input_sources: list of all input sources.
         _providers_and_hooks_factory: factory for hook and provider creation.
+        _asyncio_loop: eventloop, in which the system is running.
+        _command_queue: asyncio.Queue, to which the commands go.
     """
 
     def __init__(self):
@@ -31,6 +33,8 @@ class PHFSystem:
         self._running_state = False
         self._input_sources = []
         self._providers_and_hooks_factory = HookAndProviderFactory()
+        self._asyncio_loop = None
+        self._command_queue = None
 
     def get_providers(self) -> typing.List[AbstractContentProvider]:
         return self._providers[:]
@@ -122,7 +126,6 @@ class PHFSystem:
             content_provider.cycle()
         )
 
-    # TODO add convertion to command from dict
     async def _get_command(self, command_queue):
         """Get command"""
         kek, target = await command_queue.get()
@@ -135,61 +138,26 @@ class PHFSystem:
         command sources.
         """
         self._running_state = True
+        self._asyncio_loop = asyncio.get_running_loop()
         # TODO change it so each inputsource has it's own queues.
-        command_queue = asyncio.Queue()
+        self._command_queue = asyncio.Queue()
         result_queue = asyncio.Queue()
 
         for input_source in self._input_sources:
-            input_source.start(command_queue, result_queue)
+            input_source.start(self._command_queue, result_queue)
 
         for provider in self._providers:
             self._run_content_provider(provider)
 
         while True:
-            command_dict, evoker = await self._get_command(command_queue)
-            output = await self._execute_command(command_dict)
+            command, evoker = await self._get_command(self._command_queue)
+            output = await self._execute_command(command)
             await evoker.set_command_result(output)
 
     # TODO overrite to get Command as an argument
-    async def _execute_command(self, command_dict):
-        output = dict()
-        output['type'] = command_dict['type']
-        output['input_command'] = command_dict
-        if command_dict['type'] == "new_provider":
-            provider = self._providers_and_hooks_factory.create_provider(command_dict['target_class'],
-                                                                         (command_dict['positionals']),
-                                                                         (command_dict['keywords']))
-            self.add_provider(provider)
-            output['status'] = "SUCCESS"
-            output['message'] = f"Successfully created {str(provider)}"
-
-        elif command_dict['type'] == "new_hook":
-            target = command_dict['target_provider_num']
-
-            hook = self._providers_and_hooks_factory.create_hook(command_dict['target_class'],
-                                                                 (command_dict['positionals']),
-                                                                 (command_dict['keywords']))
-            self._providers[target].add_hook(hook)
-            output['status'] = "SUCCESS"
-            output['message'] = f"Successfully created {str(hook)} and linked" + \
-                                f"to {self._providers[target]}"
-
-        elif command_dict['type'] == "list_providers":
-            output['status'] = "SUCCESS"
-            msgs = []
-            for provider in self._providers:
-                msgs.append(str(provider))
-            output['providers'] = msgs
-
-        elif command_dict['type'] == 'list_hooks':
-            output['status'] = "SUCCESS"
-            provider = self._providers[command_dict['target_provider_num']]
-            output['provider'] = str(provider)
-            hooks = []
-            for hook in provider.get_hooks():
-                hooks.append(str(hook))
-            output['hooks'] = hooks
-        return output
+    async def _execute_command(self, command: Command):
+        res = command.execute_command(self)
+        return res
 
     def start(self):
         """Start work of the framework.

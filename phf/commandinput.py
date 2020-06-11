@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-import typing
 from typing import TYPE_CHECKING
 
 from aioconsole import ainput
@@ -36,12 +35,11 @@ class AbstractCommandInput:
         self._command_input_task = None
 
     # TODO command class
-    async def get_command(self) -> typing.Union[dict]:
+    async def get_command(self) -> Command:
         """Retrieve command from source.
 
         Returns:
-            A command formed into specially formatted dict or
-            (not implemented now) a Command object.
+            A command formed into Command object.
         """
         raise NotImplementedError(f"Get command call of {self.__class__}")
 
@@ -87,9 +85,9 @@ class ConsoleDebugInput(AbstractCommandInput):
     """
 
     async def get_command(self):
+        raise NotImplementedError("In development")
         input_command = await ainput("Enter site name:\n")
         input_array = input_command.split(" ")
-        res = dict()
 
         return res
 
