@@ -8,6 +8,7 @@ import typing
 import pytest
 
 import phf.abstracthook as hooks
+import phf.commandinput as commandinput
 import phf.factory as factory
 import phf.provider as providers
 from phf.phfsystem import PHFSystem
@@ -47,12 +48,12 @@ class HookFactory:
     def __init__(self):
         self._tasks = []
 
-    async def get_started_hook(self):
+    async def get_started_hook(self) -> DebugLogging:
         hook = DebugLogging()
         self._tasks.append(asyncio.Task(hook.cycle_call()))
         return hook
 
-    async def get_hook(self):
+    async def get_hook(self) -> DebugLogging:
         hook = DebugLogging()
         return hook
 
@@ -62,7 +63,7 @@ class HookFactory:
 
 
 @pytest.fixture
-def hook_factory():
+def hook_factory() -> HookFactory:
     """Factory creation fixture.
 
     Cleans uf after yield."""
@@ -72,7 +73,7 @@ def hook_factory():
 
 
 @pytest.fixture
-def hook():
+def hook() -> DebugLogging:
     """Fixture for a hook."""
     return DebugLogging()
 
@@ -86,7 +87,7 @@ all_abstract_providers = [providers.AbstractContentProvider,
 
 
 @pytest.fixture(params=all_abstract_providers)
-def any_abstract_provider(request):
+def any_abstract_provider(request) -> providers.AbstractContentProvider:
     """Fixture for any type of provider."""
     provider_class = request.param
     if issubclass(provider_class, providers.PeriodicContentProvider):
@@ -108,7 +109,7 @@ class NothingPeriodicProvider(providers.PeriodicContentProvider):
         self.id += 1
         return self.id - 1
 
-    async def result_callback(self, results):
+    async def result_callback(self, results) -> None:
         self.logs.append(results)
     #  self.result = results
 
@@ -125,20 +126,20 @@ class NothingBlockingProvider(providers.BlockingContentProvider):
         self.id += 1
         return self.id - 1
 
-    async def result_callback(self, results):
+    async def result_callback(self, results) -> None:
         self.logs.append(results)
 
 
 class PeriodicProviderFactory:
     """Creates periodic providers."""
 
-    def get_provider(self):
+    def get_provider(self) -> NothingPeriodicProvider:
         """Create periodic provider."""
         return NothingPeriodicProvider()
 
 
 @pytest.fixture
-def periodic_provider_factory():
+def periodic_provider_factory() -> PeriodicProviderFactory:
     """Fixture to create PeriodicProviderFactory."""
     return PeriodicProviderFactory()
 
@@ -148,7 +149,7 @@ all_nonabstract_consistent_providers = [NothingPeriodicProvider,
 
 
 @pytest.fixture(params=all_nonabstract_consistent_providers)
-def any_nonabstract_consistent_provider(request):
+def any_nonabstract_consistent_provider(request) -> providers.ConsistentDataProvider:
     """Fixture for creating a periodic or blocking content provider."""
     provider_class = request.param
     if issubclass(provider_class, providers.PeriodicContentProvider):
@@ -192,14 +193,14 @@ def controlled_result_callback_provider(any_nonabstract_consistent_provider,
 
 
 @pytest.fixture
-def message_system():
+def message_system() -> providers.MessageSystem:
     """Fixture to create a message system."""
     message_system = providers.MessageSystem()
     return message_system
 
 
 @pytest.fixture
-def run_smth_once():
+def run_smth_once() -> typing.Callable:
     """Fixture to create a function that once yield True and False later."""
     kek = True
 
@@ -214,13 +215,13 @@ def run_smth_once():
 
 
 @pytest.fixture
-def complex_provider_nonstarted():
+def complex_provider_nonstarted() -> providers.ComplexContentProvider:
     """Fixture to create a complex provider."""
     return providers.ComplexContentProvider()
 
 
 @pytest.fixture
-def complex_provider():
+def complex_provider() -> providers.ComplexContentProvider:
     """Fixture to create a complex provider and run it in a different thread."""
     provider = providers.ComplexContentProvider()
 
@@ -234,7 +235,7 @@ def complex_provider():
 
 
 @pytest.fixture(scope="session")
-def hook_provider_factory():
+def hook_provider_factory() -> factory.HookAndProviderFactory:
     """Creates a ready to use HookAndProviderFactory.
 
     The factory has already read all needed providers and hooks."""
@@ -242,7 +243,10 @@ def hook_provider_factory():
 
 
 @pytest.fixture
-def fake_started_phfsys():
+def fake_started_phfsys() -> PHFSystem:
+    """Create PHFSystem that's not running, but running flag is True.
+
+    As it isn't running, commands cannot be run from the inside."""
     phfsys = PHFSystem()
     phfsys._running_state = True
     phfsys.import_hook_sources("factory_obj")
@@ -251,25 +255,50 @@ def fake_started_phfsys():
 
 
 class FakeCommandTranslator:
+    """Class to yield Command to PHFSystem without usage of command inputs.
+
+    This class should be send to PHFSystem instead of command input class
+    command input's set_command_result is ducktyped here.
+
+    Attributes:
+        _to_phfsys_queue: asyncio.Queue, queue where to put commands(matches
+            PHFSystem._command_queue).
+        _loop: asyncio.loop, at which PHFSystem runs.
+        logs: logs of all commands results.
+        """
+
     def __init__(self):
         self._to_phfsys_queue = None
         self._loop = None
         self.logs = []
 
-    async def set_command_result(self, output):
+    async def set_command_result(self, output) -> None:
+        """Mocks AbstractCommandInput.set_command_result.
+
+        Shouldn't be called by user.
+        """
         self.logs.append(output)
 
-    def initialize(self, event_loop, queue):
+    def initialize(self,
+                   event_loop: asyncio.AbstractEventLoop,
+                   queue: asyncio.Queue) -> None:
+        """Initialize object with PHFSystem's event loop and command input queue.
+        Args:
+            event_loop: targeted PHFSystem's event loop.
+            queue: targeted PHFSystem's command input queue.
+        """
         self._loop = event_loop
         self._to_phfsys_queue = queue
 
-    def send_command_to_phfsys(self, command):
+    def send_command_to_phfsys(self, command: commandinput.Command) -> None:
+        """Send command to targeted PHFSystem's command queue."""
         asyncio.run_coroutine_threadsafe(self._to_phfsys_queue.put((command, self)),
                                          self._loop)
 
 
 @pytest.fixture
-async def started_phfsys():
+async def started_phfsys() -> (PHFSystem, FakeCommandTranslator):
+    """Fixture to get a running PHFSystem and command input source."""
     phfsys = PHFSystem()
     fake_command_translator = FakeCommandTranslator()
 

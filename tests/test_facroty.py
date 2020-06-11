@@ -6,7 +6,7 @@ from factory_obj.file1 import Hook1, Provider1
 from phf import factory
 
 hook_names = ["hook", "Hook1", "Hook2", "AbstractHook"]
-provider_names = ["Provider1", "BlockingContentProvider"]
+provider_names = ["Provider1", "BlockingContentProvider", ]
 
 
 def test_add_class_to_dict():
@@ -89,8 +89,10 @@ class TestFactory:
 
         fact.import_provider_classes("factory_obj",
                                      "factory_obj/hooks_package/hook3.py")
-        hooks = Counter(fact._provider_analyser.get_providers().keys())
-        assert hooks == Counter(provider_names)
+        providers = Counter(fact._provider_analyser.get_providers().keys())
+
+        assert providers == Counter(provider_names + ["Provider3",
+                                                      "AbstractContentProvider"])
 
     class TestHookCreation:
         """Tests for hook creation."""
