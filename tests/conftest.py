@@ -248,3 +248,42 @@ def fake_started_phfsys():
     phfsys.import_hook_sources("factory_obj")
     phfsys.import_provider_sources("factory_obj")
     return phfsys
+
+
+class FakeCommandTranslator:
+    def __init__(self):
+        self._to_phfsys_queue = None
+        self._loop = None
+        self.logs = []
+
+    async def set_command_result(self, output):
+        self.logs.append(output)
+
+    def initialize(self, event_loop, queue):
+        self._loop = event_loop
+        self._to_phfsys_queue = queue
+
+    def send_command_to_phfsys(self, command):
+        asyncio.run_coroutine_threadsafe(self._to_phfsys_queue.put((command, self)),
+                                         self._loop)
+
+
+@pytest.fixture
+async def started_phfsys():
+    phfsys = PHFSystem()
+    fake_command_translator = FakeCommandTranslator()
+
+    def _start_sys():
+        phfsys.start()
+
+    phfsys.import_hook_sources("factory_obj")
+    phfsys.import_provider_sources("factory_obj")
+
+    loop = None
+
+    threading.Thread(target=_start_sys).start()
+    await asyncio.sleep(0.1)
+
+    fake_command_translator.initialize(phfsys._asyncio_loop, phfsys._command_queue)
+
+    return phfsys, fake_command_translator
