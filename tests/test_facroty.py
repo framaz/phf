@@ -65,18 +65,18 @@ class TestFactory:
     """Tests for HookAndProviderFactory."""
     def test_factory_constructor(self):
         fact = factory.HookAndProviderFactory(["factory_obj"], ["factory_obj"])
-        hooks = Counter(fact._hookAnalyser.get_hooks().keys())
+        hooks = Counter(fact._hook_analyser.get_hooks().keys())
         assert hooks == Counter(hook_names)
 
         fact = factory.HookAndProviderFactory(
             ["factory_obj"],
             ["factory_obj", "factory_obj/hooks_package/hook3.py"],
         )
-        hooks = Counter(fact._hookAnalyser.get_hooks().keys())
+        hooks = Counter(fact._hook_analyser.get_hooks().keys())
         assert hooks == Counter(hook_names + ["Hook3"])
 
         fact = factory.HookAndProviderFactory()
-        hooks = Counter(fact._hookAnalyser.get_hooks().keys())
+        hooks = Counter(fact._hook_analyser.get_hooks().keys())
         assert hooks == Counter()
 
     def test_factory_import_after_constructor(self):
@@ -84,12 +84,12 @@ class TestFactory:
 
         fact.import_hook_classes("factory_obj",
                                  "factory_obj/hooks_package/hook3.py")
-        hooks = Counter(fact._hookAnalyser.get_hooks().keys())
+        hooks = Counter(fact._hook_analyser.get_hooks().keys())
         assert hooks == Counter(hook_names + ["Hook3"])
 
         fact.import_provider_classes("factory_obj",
                                      "factory_obj/hooks_package/hook3.py")
-        hooks = Counter(fact._providerAnalyser.get_providers().keys())
+        hooks = Counter(fact._provider_analyser.get_providers().keys())
         assert hooks == Counter(provider_names)
 
     class TestHookCreation:

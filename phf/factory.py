@@ -33,9 +33,9 @@ class HookAndProviderFactory:
     Navigate to _BasicAnalyser for further information about reading classes from paths.
 
     Attributes:
-        _hookAnalyser: Instance of _HookAnalyser class, most of hook-related actions is
+        _hook_analyser: Instance of _HookAnalyser class, most of hook-related actions is
             delegated to it.
-        _providerAnalyser: Instance of _HookAnalyser class, most of hook-related actions is
+        _provider_analyser: Instance of _HookAnalyser class, most of hook-related actions is
             delegated to it.
     """
 
@@ -55,11 +55,11 @@ class HookAndProviderFactory:
         if hook_paths is None:
             hook_paths = []
 
-        self._hookAnalyser = _HookAnalyser()
-        self._hookAnalyser.analyse(*hook_paths)
+        self._hook_analyser = _HookAnalyser()
+        self._hook_analyser.analyse(*hook_paths)
 
-        self._providerAnalyser = _ProviderAnalyser()
-        self._providerAnalyser.analyse(*provider_paths)
+        self._provider_analyser = _ProviderAnalyser()
+        self._provider_analyser.analyse(*provider_paths)
 
     def import_hook_classes(self, *args) -> None:
         """Remember all hook classes from paths
@@ -69,7 +69,7 @@ class HookAndProviderFactory:
         Args:
             *args: strings of files/hooks/directories paths
         """
-        self._hookAnalyser.analyse(*args)
+        self._hook_analyser.analyse(*args)
 
     def import_provider_classes(self, *args) -> None:
         """Remember all provider classes from paths
@@ -79,7 +79,7 @@ class HookAndProviderFactory:
         Args:
             *args: strings of files/hooks/directories paths
         """
-        self._providerAnalyser.analyse(*args)
+        self._provider_analyser.analyse(*args)
 
     def create_hook(self, hook_alias: str,
                     args: typing.List = None,
@@ -99,7 +99,7 @@ class HookAndProviderFactory:
         if kwargs is None:
             kwargs = {}
 
-        all_hooks = self._hookAnalyser.get_hooks()
+        all_hooks = self._hook_analyser.get_hooks()
         if hook_alias not in all_hooks:
             raise KeyError(f'No hook named "{hook_alias}"')
 
@@ -123,7 +123,7 @@ class HookAndProviderFactory:
         if kwargs is None:
             kwargs = {}
 
-        all_providers = self._providerAnalyser.get_providers()
+        all_providers = self._provider_analyser.get_providers()
         if provider_alias not in all_providers:
             raise KeyError(f'No provider named "{provider_alias}"')
 
