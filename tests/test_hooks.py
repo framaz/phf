@@ -39,10 +39,10 @@ class TestHooks:
 
     @pytest.mark.asyncio
     async def test_hook_stopping(self, hook):
-        asyncio.Task(hook.cycle_call())
+        task = asyncio.Task(hook.cycle_call())
         await asyncio.sleep(1)
         hook.stop()
-        await hook.get_straight_queue().put("kek")
+        await asyncio.wait_for(task, 5)
 
     @pytest.mark.asyncio
     async def test_multiple_unconsistent_add_and_retrieve(self, hook_factory):

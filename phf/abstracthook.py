@@ -74,6 +74,7 @@ class AbstractHook:
     def stop(self) -> None:
         """Stops the hook."""
         self._running = False
+        self.get_straight_queue().put_nowait(asyncio.CancelledError())
 
     async def cycle_call(self) -> None:
         """Make hook start doing its work.
@@ -85,9 +86,10 @@ class AbstractHook:
         self._running = True
         while self._is_running():
             target = await self.get_straight_queue().get()
+            if isinstance(target, asyncio.CancelledError):
+                break
             result = await self.hook_action(target)
             self.get_callback_queue().put_nowait(result)
-        pass
 
     async def hook_action(self, data: typing.Any) -> typing.Any:
         """Do hook action on the data provided by provider.
