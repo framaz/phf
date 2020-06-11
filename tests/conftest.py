@@ -47,35 +47,44 @@ class HookFactory:
 
     def __init__(self):
         self._tasks = []
+        self._hooks = []
 
     async def get_started_hook(self) -> DebugLogging:
         hook = DebugLogging()
+        self._hooks.append(hook)
         self._tasks.append(asyncio.Task(hook.cycle_call()))
         return hook
 
     async def get_hook(self) -> DebugLogging:
         hook = DebugLogging()
+        self._hooks.append(hook)
         return hook
 
     def stop_all(self):
         for task in self._tasks:
             task.cancel()
+        for hook in self._hooks:
+            hook.stop()
 
 
 @pytest.fixture
-def hook_factory() -> HookFactory:
+async def hook_factory() -> HookFactory:
     """Factory creation fixture.
 
     Cleans uf after yield."""
     cur_factory = HookFactory()
     yield cur_factory
     cur_factory.stop_all()
+    await asyncio.sleep(0.01)
 
 
 @pytest.fixture
-def hook() -> DebugLogging:
+async def hook() -> DebugLogging:
     """Fixture for a hook."""
-    return DebugLogging()
+    hook = DebugLogging()
+    yield hook
+    hook.stop()
+    await asyncio.sleep(0.01)
 
 
 all_abstract_providers = [providers.AbstractContentProvider,
