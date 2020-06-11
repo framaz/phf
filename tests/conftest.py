@@ -242,7 +242,7 @@ def hook_provider_factory():
 
 
 @pytest.fixture
-def fake_started_async_phfsys():
+def fake_started_phfsys():
     phfsys = PHFSystem()
     phfsys._running_state = True
     phfsys.import_hook_sources("factory_obj")
