@@ -121,10 +121,7 @@ class PHFSystem:
     def _run_content_provider(self,
                               content_provider: AbstractContentProvider) -> None:
         """Run content provider's work coroutine."""
-        # TODO provider run itself, not from outside
-        content_provider._asyncio_task = asyncio.create_task(
-            content_provider.cycle()
-        )
+        content_provider.start()
 
     async def _get_command(self, command_queue):
         """Get command"""

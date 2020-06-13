@@ -146,10 +146,15 @@ class AbstractContentProvider:
         """Return whether provider is running now"""
         return self._asyncio_running
 
+    def start(self) -> None:
+        """Start the provider."""
+        self._asyncio_running = asyncio.create_task(self.cycle())
+
     # TODO better stop
     def stop(self):
         """Stop hook from running"""
-        self._asyncio_running = False
+        pass
+        # raise NotImplementedError(f"Stop of {self.__class__.__name__} not implemented.")
 
     async def __aenter__(self) -> None:
         """Initialise all in-loop attributes of class."""
@@ -235,14 +240,17 @@ class PeriodicContentProvider(ConsistentDataProvider, ABC):
         super().__init__(*args, **kwargs)
         self.period = period
 
+    def stop(self):
+        self._asyncio_running = False
+
     async def cycle(self) -> None:
         """Do provider's work in cycle.
 
         Can be stopped by self.stop()"""
         async with self:
             while self._is_running():
-                string = await self.get_content()
-                await self._notify_all_hooks(string)
+                data = await self.get_content()
+                await self._notify_all_hooks(data)
                 result = await self._run_result_callback()
                 await self.result_callback(result)
                 await asyncio.sleep(self.period)
