@@ -96,14 +96,23 @@ all_abstract_providers = [providers.AbstractContentProvider,
 
 
 @pytest.fixture(params=all_abstract_providers)
-def any_abstract_provider(request) -> providers.AbstractContentProvider:
+async def any_abstract_provider(request, monkeypatch) -> providers.AbstractContentProvider:
     """Fixture for any type of provider."""
     provider_class = request.param
     if issubclass(provider_class, providers.PeriodicContentProvider):
         provider = provider_class(period=0)
     else:
         provider = provider_class()
-    return provider
+
+    async def _coro():
+        return "1"
+
+    if issubclass(provider_class, providers.ConsistentDataProvider):
+        monkeypatch.setattr(provider, "get_content", _coro)
+
+    yield provider
+    await asyncio.sleep(0.01)
+    provider.stop()
 
 
 class NothingPeriodicProvider(providers.PeriodicContentProvider):
@@ -188,6 +197,7 @@ def controlled_result_callback_provider(any_nonabstract_consistent_provider,
         await event_forth.wait()
         event_forth.clear()
         event_back.set()
+        # noinspection PyUnresolvedReferences
         any_nonabstract_consistent_provider.logs.append(results)
 
     monkeypatch.setattr(any_nonabstract_consistent_provider,

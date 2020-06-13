@@ -37,6 +37,46 @@ class TestBasicForAllProviders:
         assert any_abstract_provider._asyncio_running
 
 
+@pytest.mark.asyncio
+async def test_stop_periodic_provider(hook_factory):
+    provider = conftest.NothingPeriodicProvider()
+    provider.start()
+    await asyncio.sleep(0.01)
+
+    hook = await hook_factory.get_hook()
+    provider.add_hook(hook)
+
+    assert not provider._asyncio_task.done()
+    provider.stop()
+
+    await asyncio.sleep(0.01)
+    assert provider._asyncio_task.done()
+    assert not provider._asyncio_running
+
+    assert not hook._running
+
+
+@pytest.mark.asyncio
+async def test_stop_blocking_provider(hook_factory):
+    provider = conftest.NothingBlockingProvider()
+    provider.start()
+    await asyncio.sleep(0.01)
+
+    hook = await hook_factory.get_hook()
+    provider.add_hook(hook)
+
+    assert not provider._asyncio_task.done()
+    provider.stop()
+
+    await asyncio.sleep(0.05)
+    assert provider._asyncio_task.done()
+    assert not provider._asyncio_running
+
+    assert not hook._running
+
+    provider._thread.join(timeout=5)
+
+
 amount_of_hooks = [0, 1, 2]
 
 
@@ -68,6 +108,7 @@ class TestConsistentProviders:
 
         if isinstance(any_nonabstract_consistent_provider, BlockingContentProvider):
             await asyncio.sleep(0.2)
+        # noinspection PyUnresolvedReferences
         assert any_nonabstract_consistent_provider.logs[-1] == [0] * hook_amount
 
     @pytest.mark.asyncio
@@ -231,21 +272,3 @@ class TestComplexContentProvider:
         assert message_system.retrieve_result(2) == [3] * hook_amount
         assert message_system.retrieve_result(0) == [1] * hook_amount
 
-
-@pytest.mark.asyncio
-async def test_stop_periodic_provider(hook_factory):
-    provider = conftest.NothingPeriodicProvider()
-    provider.start()
-    await asyncio.sleep(0.01)
-
-    hook = await hook_factory.get_hook()
-    provider.add_hook(hook)
-
-    assert not provider._asyncio_task.done()
-    provider.stop()
-
-    await asyncio.sleep(0.01)
-    assert provider._asyncio_task.done()
-    assert not provider._asyncio_running
-
-    assert not hook._running

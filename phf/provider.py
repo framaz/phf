@@ -262,11 +262,15 @@ class BlockingContentProvider(ConsistentDataProvider, ABC):
 
     Attributes:
         _content_queue: queue from provider's thread to PHFSystem's thread.
+        _thread_loop: asyncio loop, loop in which data is recieved.
+        _thread: threading.Thread, in which blocking operation is executed.
         """
 
     def __new__(cls, *args, **kwargs):
         obj = ConsistentDataProvider.__new__(cls, *args, **kwargs)
         obj._content_queue = asyncio.Queue()
+        obj._thread_loop = None
+        obj._thread = None
         return obj
 
     def __init__(self, *args, **kwargs):
@@ -283,12 +287,20 @@ class BlockingContentProvider(ConsistentDataProvider, ABC):
                 res = asyncio.run_coroutine_threadsafe(self._run_result_callback(), self._asyncio_loop).result()
                 await self.result_callback(res)
 
-        asyncio.run(_coro())
+        self._thread_loop = asyncio.new_event_loop()
+        self._thread_loop.run_until_complete(_coro())
+
+    def stop(self):
+        if self._thread_loop and self._thread_loop.is_running():
+            self._thread_loop.stop()
+        super().stop()
 
     async def __aenter__(self):
         """Initialise all in-loop attributes of class."""
         kek = await super().__aenter__()
         self._content_queue = asyncio.Queue()
+        self._thread = threading.Thread(target=self._thread_func)
+        self._thread.start()
         return kek
 
     async def cycle(self) -> None:
@@ -297,7 +309,6 @@ class BlockingContentProvider(ConsistentDataProvider, ABC):
         Here it just creates the new thread and gets info from queue.
         Can be stopped by self.stop()"""
         async with self:
-            threading.Thread(target=self._thread_func).start()
             while self._is_running():
                 string = await self._content_queue.get()
                 await self._notify_all_hooks(string)
