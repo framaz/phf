@@ -28,6 +28,12 @@ class TestBasicForAllProviders:
         assert any_abstract_provider._asyncio_straight_queues == []
         assert any_abstract_provider.get_hooks() == [hook]
 
+    @pytest.mark.asyncio
+    async def test_start(self, any_abstract_provider):
+        any_abstract_provider.start()
+        assert isinstance(any_abstract_provider._asyncio_task, asyncio.Task)
+        assert any_abstract_provider._asyncio_running
+
 
 amount_of_hooks = [0, 1, 2]
 
