@@ -250,6 +250,13 @@ def hook_provider_factory() -> factory.HookAndProviderFactory:
     The factory has already read all needed providers and hooks."""
     return factory.HookAndProviderFactory(["factory_obj"], ["factory_obj"])
 
+@pytest.fixture
+def non_started_phfsys() -> PHFSystem:
+    """Create a non-started PHFSystem."""
+    phfsys = PHFSystem()
+    phfsys.import_hook_sources("factory_obj")
+    phfsys.import_provider_sources("factory_obj")
+    return phfsys
 
 @pytest.fixture
 def fake_started_phfsys() -> PHFSystem:

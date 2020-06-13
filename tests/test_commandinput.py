@@ -43,29 +43,29 @@ class TestCommands:
 
     @pytest.mark.asyncio
     async def test_ListHooksCommand(self,
-                                    fake_started_phfsys,
+                                    non_started_phfsys,
                                     periodic_provider_factory,
                                     hook_factory):
         for i in range(3):
             provider = periodic_provider_factory.get_provider()
-            fake_started_phfsys.add_provider(provider)
+            non_started_phfsys.add_provider(provider)
 
-        hook1 = hook_factory.get_hook()
-        fake_started_phfsys.get_providers()[1].add_hook(hook1)
+        hook1 = await hook_factory.get_hook()
+        non_started_phfsys.get_providers()[1].add_hook(hook1)
 
         command1 = commandinput.ListHooksCommand(0)
-        res1 = command1.execute_command(fake_started_phfsys)
+        res1 = command1.execute_command(non_started_phfsys)
         assert res1 == []
 
         command2 = commandinput.ListHooksCommand(1)
-        res2 = command2.execute_command(fake_started_phfsys)
+        res2 = command2.execute_command(non_started_phfsys)
         assert res2 == [hook1]
 
-        hook2 = hook_factory.get_hook()
-        fake_started_phfsys.get_providers()[1].add_hook(hook2)
+        hook2 = await hook_factory.get_hook()
+        non_started_phfsys.get_providers()[1].add_hook(hook2)
 
         command3 = commandinput.ListHooksCommand(1)
-        res3 = command3.execute_command(fake_started_phfsys)
+        res3 = command3.execute_command(non_started_phfsys)
         assert res3 == [hook1, hook2]
 
     @pytest.mark.asyncio
