@@ -154,8 +154,8 @@ class AbstractContentProvider:
     # TODO better stop
     def stop(self):
         """Stop hook from running"""
-        pass
-        # raise NotImplementedError(f"Stop of {self.__class__.__name__} not implemented.")
+        if self._asyncio_task is not None:
+            self._asyncio_task.cancel()
 
     async def __aenter__(self) -> None:
         """Initialise all in-loop attributes of class."""
@@ -171,7 +171,7 @@ class AbstractContentProvider:
         self._asyncio_running = False
         if exc_type is asyncio.CancelledError:
             for hook in self._asynio_hooks:
-                hook.cancel()
+                hook.stop()
             return True
 
     @classmethod
@@ -240,9 +240,6 @@ class PeriodicContentProvider(ConsistentDataProvider, ABC):
         """
         super().__init__(*args, **kwargs)
         self.period = period
-
-    def stop(self):
-        self._asyncio_running = False
 
     async def cycle(self) -> None:
         """Do provider's work in cycle.

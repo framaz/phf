@@ -2,11 +2,13 @@ import asyncio
 
 import pytest
 
+import conftest
 from phf.provider import BlockingContentProvider
 
 
 class TestBasicForAllProviders:
     """Tests that all providers should pass."""
+
     def test_aliases(self, any_abstract_provider):
         assert any_abstract_provider.get_aliases() == \
                any_abstract_provider.__class__._alias
@@ -228,3 +230,22 @@ class TestComplexContentProvider:
         assert message_system.retrieve_result(1) == [2] * hook_amount
         assert message_system.retrieve_result(2) == [3] * hook_amount
         assert message_system.retrieve_result(0) == [1] * hook_amount
+
+
+@pytest.mark.asyncio
+async def test_stop_periodic_provider(hook_factory):
+    provider = conftest.NothingPeriodicProvider()
+    provider.start()
+    await asyncio.sleep(0.01)
+
+    hook = await hook_factory.get_hook()
+    provider.add_hook(hook)
+
+    assert not provider._asyncio_task.done()
+    provider.stop()
+
+    await asyncio.sleep(0.01)
+    assert provider._asyncio_task.done()
+    assert not provider._asyncio_running
+
+    assert not hook._running
