@@ -5,6 +5,58 @@ import pytest
 from phf import commandinput
 
 
+@pytest.fixture
+async def data_retrieve_mocking():
+    async_queue = asyncio.Queue()
+
+    async def _fake_control_mocking():
+        data = await async_queue.get()
+        return data
+
+    async def _let_continue(data):
+        await async_queue.put(data)
+
+    return _fake_control_mocking, _let_continue
+
+
+@pytest.mark.asyncio
+async def test_abstract_content_provider(data_retrieve_mocking, monkeypatch):
+    mock, notifier = data_retrieve_mocking
+    abstract_input = commandinput.AbstractCommandInput()
+    command_queue = asyncio.Queue()
+    result_queue = asyncio.Queue()
+
+    def _coro(kek):
+        return "hello"
+
+    monkeypatch.setattr(abstract_input, "form_command", _coro)
+    monkeypatch.setattr(abstract_input, "retrieve_command_from_source", mock)
+
+    tmp_queue = asyncio.Queue()
+
+    async def output_command_result(result):
+        await tmp_queue.put(result)
+
+    monkeypatch.setattr(abstract_input,
+                        "output_command_result",
+                        output_command_result)
+
+    abstract_input.start(command_queue, result_queue)
+
+    assert abstract_input._asyncio_result_queue == result_queue
+    assert abstract_input._asyncio_command_queue == command_queue
+    assert isinstance(abstract_input._command_input_task, asyncio.Task)
+
+    await notifier("hello")
+
+    command, recieved_input_source = await command_queue.get()
+    assert command == "hello"
+    assert recieved_input_source is abstract_input
+
+    await result_queue.put("hi")
+    assert await tmp_queue.get() == "hi"
+
+
 class TestCommands:
     """Tests for different command classes."""
 

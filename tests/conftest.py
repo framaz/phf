@@ -342,3 +342,4 @@ async def started_phfsys() -> (PHFSystem, FakeCommandTranslator):
     fake_command_translator.initialize(phfsys._asyncio_loop, phfsys._command_queue)
 
     return phfsys, fake_command_translator
+
