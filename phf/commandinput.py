@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import typing
+from abc import ABC
 from typing import TYPE_CHECKING
 
-from aioconsole import ainput
+import aioconsole
 
 if TYPE_CHECKING:
     from phfsystem import PHFSystem
+
+T = typing.TypeVar('T')
 
 
 class AbstractCommandInput:
@@ -35,13 +39,18 @@ class AbstractCommandInput:
         self._command_input_task = None
 
     # TODO command class
-    async def get_command(self) -> Command:
-        """Retrieve command from source.
+    async def retrieve_command_from_source(self) -> T:
+        """Retrieve data from source.
+
+        The data is then passed to form_command, which translates the data to command.
 
         Returns:
             A command formed into Command object.
         """
-        raise NotImplementedError(f"Get command call of {self.__class__}")
+        raise NotImplementedError(f"retrieve_command_from_source call of {self.__class__}")
+
+    def form_command(self, data: T) -> Command:
+        raise NotImplementedError(f"form_command call of {self.__class__}")
 
     # TODO command execution result class
     async def output_command_result(self, command_result) -> None:
@@ -59,7 +68,8 @@ class AbstractCommandInput:
     async def _cycle(self) -> None:
         """Main CommandInput work in cycle."""
         while True:
-            new_command = await self.get_command()
+            data = await self.retrieve_command_from_source()
+            new_command = self.form_command(data)
             self._asyncio_command_queue.put_nowait((new_command, self))
             result = await self._asyncio_result_queue.get()
             await self.output_command_result(result)
@@ -78,33 +88,24 @@ class AbstractCommandInput:
         self._command_input_task = asyncio.create_task(self._cycle())
 
 
-class ConsoleDebugInput(AbstractCommandInput):
+class ConsoleDebugInput(AbstractCommandInput, ABC):
     """Class for getting inputs from console command line.
 
-    Will be overwritten to contain Command class.
+    Notice that there's gonna be problems with writing if some output is printed on
+    the command line.
+
+    Attributes:
+        class._input:
     """
+    _input = "Enter command data:\n"
 
-    async def get_command(self):
-        raise NotImplementedError("In development")
-        input_command = await ainput("Enter site name:\n")
-        input_array = input_command.split(" ")
-
-        return res
-
-    def get_arguments(self, input_array):
-        positional_arguments = []
-        keyword_arguments = {}
-        for argument in input_array:
-            eq_position = argument.find("=")
-            if eq_position != -1:
-                keyword = argument[0:eq_position]
-                value = argument[eq_position + 1:]
-                keyword_arguments[keyword] = value
-            else:
-                positional_arguments.append(argument)
-        return positional_arguments, keyword_arguments
+    async def retrieve_command_from_source(self):
+        """Get command data from command line."""
+        input_command = await aioconsole.ainput(self._input)
+        return input_command
 
     async def output_command_result(self, command_result):
+        """Print the command result."""
         print(str(command_result))
 
 
@@ -307,3 +308,17 @@ class NewHookCommand(Command):
                                         self._kwargs)
         self._provider.add_hook(self._hook)
         return self._hook
+
+
+def get_arguments(input_array):
+    positional_arguments = []
+    keyword_arguments = {}
+    for argument in input_array:
+        eq_position = argument.find("=")
+        if eq_position != -1:
+            keyword = argument[0:eq_position]
+            value = argument[eq_position + 1:]
+            keyword_arguments[keyword] = value
+        else:
+            positional_arguments.append(argument)
+    return positional_arguments, keyword_arguments
