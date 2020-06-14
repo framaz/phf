@@ -46,7 +46,7 @@ import threading
 import typing
 from abc import ABC
 
-from abstracthook import AbstractHook
+from .abstracthook import AbstractHook
 
 
 class AbstractContentProvider:

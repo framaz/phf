@@ -8,9 +8,9 @@ import asyncio
 import typing
 from typing import TYPE_CHECKING
 
-from commandinput import AbstractCommandInput, Command
-from factory import HookAndProviderFactory
-from provider import AbstractContentProvider
+from .commandinput import AbstractCommandInput, Command
+from .factory import HookAndProviderFactory
+from .provider import AbstractContentProvider
 
 if TYPE_CHECKING:
     from abstracthook import AbstractHook

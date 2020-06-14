@@ -10,8 +10,8 @@ import inspect
 import os
 import typing
 
-from abstracthook import AbstractHook
-from provider import AbstractContentProvider
+from .abstracthook import AbstractHook
+from .provider import AbstractContentProvider
 
 
 class HookAndProviderFactory:
