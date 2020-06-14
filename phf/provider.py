@@ -150,6 +150,7 @@ class AbstractContentProvider:
         """Start the provider."""
         self._asyncio_running = True
         self._asyncio_task = asyncio.create_task(self.cycle())
+        self._asyncio_loop = asyncio.get_event_loop()
 
     # TODO better stop
     def stop(self):
