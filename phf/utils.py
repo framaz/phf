@@ -19,8 +19,8 @@ async def download_one_file(site, path, session, semaphore):
                 f = await aiofiles.open(path, mode='wb')
             except FileNotFoundError:
                 import os
-                dirs = path.split("/")
-                dirs = "/".join(dirs[:-1])
+                dirs = path.split(os.path.sep)
+                dirs = os.path.sep.join(dirs[:-1])
                 os.makedirs(dirs)
                 f = await aiofiles.open(path, mode='wb')
             await f.write(await resp.read())
