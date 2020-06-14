@@ -2,10 +2,11 @@ import setuptools
 
 setuptools.setup(
     name='phf',
-    version='0.0.0',
+    version='1.0.0',
     packages=['phf'],
-    package_dir={},
-    url='https://github.com/framaz/AsyncSiteParser',
+    install_requires=["aioconsole", "aiofiles", "aiohttp"],
+    package_dir={'phf': 'phf'},
+    url='https://github.com/framaz/phf',
     license='MIT License',
     author='framaz',
     author_email='framaz@yandex.ru',
