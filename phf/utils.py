@@ -21,7 +21,10 @@ async def download_one_file(site, path, session, semaphore):
                 import os
                 dirs = path.split(os.path.sep)
                 dirs = os.path.sep.join(dirs[:-1])
-                os.makedirs(dirs)
+                try:
+                    os.makedirs(dirs)
+                except FileNotFoundError:
+                    await asyncio.sleep(0.1)
                 f = await aiofiles.open(path, mode='wb')
             await f.write(await resp.read())
             await f.close()

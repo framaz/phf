@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='phf',
-    version='1.0.0',
+    version='1.0.1',
     packages=['phf'],
     install_requires=["aioconsole", "aiofiles", "aiohttp"],
     package_dir={'phf': 'phf'},
