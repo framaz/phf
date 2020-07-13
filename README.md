@@ -16,6 +16,11 @@ phf — ProviderHookFramework is a python framework for developing async applica
 * pytest and pytest_asyncio for testing
 
 ## Installation
+
+Just download the newest release and install it with pip.
+
+Also you can build it yourself:
+
 1. Clone the repo and navigate to the repo root folder.
 2. Download setuptools and wheel: ```python -m pip install --user --upgrade setuptools wheel```
 3. ```python setup.py sdist bdist_wheel```
